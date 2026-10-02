@@ -1,0 +1,15 @@
+{
+  "name": "orcamento-compartilhado",
+  "version": "1.0.0",
+  "description": "App de finanças pessoais com orçamento compartilhado, metas conjuntas e divisão de contas",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
