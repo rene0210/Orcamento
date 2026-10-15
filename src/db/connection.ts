@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import type { Database as BetterSqlite3Database } from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -18,7 +19,8 @@ if (!fs.existsSync(dbDir)) {
 }
 
 // Abre (ou cria) o banco SQLite
-export const db = new Database(dbPath);
+// Tipamos explicitamente para o TypeScript conseguir nomear o tipo na exportação
+export const db: BetterSqlite3Database = new Database(dbPath);
 
 // Ativa integridade referencial (chaves estrangeiras)
 db.pragma('foreign_keys = ON');
