@@ -4,7 +4,7 @@
 -- ============================================================
 
 -- 1. Dois usuários
-INSERT INTO usuarios (nome, email, senha_hash) VALUES
+INSERT OR IGNORE INTO usuarios (nome, email, senha_hash) VALUES
   ('Ana Silva', 'ana@email.com', 'hash_ana_123'),
   ('Bruno Silva', 'bruno@email.com', 'hash_bruno_123');
 
@@ -14,7 +14,7 @@ INSERT INTO grupos (nome, descricao, criado_por_id) VALUES
 
 -- 3. Ambos são membros do grupo, com rendas diferentes
 -- (essencial para rateio proporcional à renda)
-INSERT INTO membros_grupo (grupo_id, usuario_id, papel, renda_mensal) VALUES
+INSERT OR IGNORE INTO membros_grupo (grupo_id, usuario_id, papel, renda_mensal) VALUES
   (1, 1, 'admin', 6000),   -- Ana ganha R$ 6.000
   (1, 2, 'membro', 4000);  -- Bruno ganha R$ 4.000
 
@@ -38,7 +38,7 @@ INSERT INTO transacoes (grupo_id, categoria_id, usuario_id, descricao, valor, ti
   (1, 6, 1, 'Passagem aérea', 1200, 'despesa', '2026-10-14', 'Reserva para dezembro', 'manual');
 
 -- 6. Orçamento mensal (outubro/2026)
-INSERT INTO orcamentos (grupo_id, categoria_id, mes, valor_limite, alerta_em) VALUES
+INSERT OR IGNORE INTO orcamentos (grupo_id, categoria_id, mes, valor_limite, alerta_em) VALUES
   (1, 2, '2026-10', 800, 80),   -- Alimentação: R$ 800, alerta a 80%
   (1, 3, '2026-10', 2000, 90),  -- Moradia: R$ 2000, alerta a 90%
   (1, 4, '2026-10', 300, 80),   -- Transporte: R$ 300, alerta a 80%
@@ -65,10 +65,10 @@ INSERT INTO rateio_participantes (rateio_id, usuario_id, valor_devido, valor_pag
   (1, 2, 112, 0, 'pendente');
 
 -- 10. Rateio de internet (50/50)
-INSERT INTO rateios (grupo_id, descricao, valor_total, regra_rateio, data_vencimento, status, criado_por_id) VALUES
+INSERT OR IGNORE INTO rateios (grupo_id, descricao, valor_total, regra_rateio, data_vencimento, status, criado_por_id) VALUES
   (1, 'Internet fibra - outubro', 100, '50_50', '2026-10-15', 'aberto', 2);
 
-INSERT INTO rateio_participantes (rateio_id, usuario_id, valor_devido, valor_pago, status) VALUES
+INSERT OR IGNORE INTO rateio_participantes (rateio_id, usuario_id, valor_devido, valor_pago, status) VALUES
   (2, 1, 50, 50, 'pago'),
   (2, 2, 50, 50, 'pago');
 

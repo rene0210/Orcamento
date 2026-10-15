@@ -1,21 +1,21 @@
 import express from 'express';
 import { db } from './db/connection.ts';
+import categoriasRouter from './routes/categorias.ts';
+import transacoesRouter from './routes/transacoes.ts';
 
 const app = express();
 const PORTA = 3000;
 
-// Middleware para entender JSON no corpo das requisições
 app.use(express.json());
 
-// ------------------------------------------------------------
-// Rota de saúde (health check)
-// Confirma que o servidor está no ar e o banco responde
-// ------------------------------------------------------------
+// Rotas da API
+app.use('/categorias', categoriasRouter);
+app.use('/transacoes', transacoesRouter);
+
+// Rota de saúde
 app.get('/health', (_req, res) => {
   try {
-    // Testa conexão com o banco
     const resultado = db.prepare('SELECT 1 as ok').get() as { ok: number };
-
     res.json({
       status: 'ok',
       mensagem: 'Servidor rodando!',
@@ -31,10 +31,6 @@ app.get('/health', (_req, res) => {
   }
 });
 
-// ------------------------------------------------------------
-// Inicia o servidor
-// ------------------------------------------------------------
 app.listen(PORTA, () => {
   console.log(`🚀 Servidor rodando em http://localhost:${PORTA}`);
-  console.log(`🔗 Teste: http://localhost:${PORTA}/health`);
 });
