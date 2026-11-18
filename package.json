@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts"
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:full": "concurrently \"npm run dev\" \"npm run dev:frontend\"",
+    "start": "tsx src/index.ts",
+    "build:frontend": "cd frontend && npm run build"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -14,6 +17,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.4",
     "@types/pdfkit": "^0.17.7",
+    "concurrently": "^10.0.7",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   },
