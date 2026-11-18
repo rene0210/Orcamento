@@ -1042,18 +1042,6 @@ app.get('/relatorios/pdf', autenticarToken, (_req, res) => {
   }
 });
 
-// ============================================================
-// SERVIR FRONTEND (SPA fallback)
-// ============================================================
-app.get('*', (_req, res) => {
-  const indexPath = path.join(__dirname, '../frontend/dist/index.html');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(404).json({ erro: 'Frontend não encontrado. Execute npm run build no frontend.' });
-  }
-});
-
 app.listen(PORTA, () => {
   console.log(`🚀 Servidor rodando em http://localhost:${PORTA}`);
 });
