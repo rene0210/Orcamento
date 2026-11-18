@@ -1,7 +1,9 @@
 -- ============================================================
 -- App de Orçamento Compartilhado — Banco de Dados (SQLite)
 -- ============================================================
--- PRAGMA para garantir integridade referencial (chaves estrangeiras)
+-- SQLite escolhido por ser arquivo único, sem servidor externo.
+-- Ideal para MVP e portfólio; fácil de migrar para PostgreSQL depois.
+-- PRAGMA foreign_keys = ON ativa integridade referencial (sem órfãos).
 PRAGMA foreign_keys = ON;
 
 -- ------------------------------------------------------------
@@ -62,7 +64,10 @@ CREATE TABLE IF NOT EXISTS categorias (
 
 -- ------------------------------------------------------------
 -- 5. TRANSACOES
--- Cada lançamento financeiro (receita ou despesa)
+-- Cada lançamento financeiro (receita ou despesa).
+-- 'origem' distingue lançamentos manuais de importados (CSV/OFX).
+-- 'arquivo_origem' permite rastrear de qual extrato veio a transação.
+-- ON DELETE CASCADE: se excluir grupo/categoria/usuario, transações somam junto.
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS transacoes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -131,7 +136,9 @@ CREATE TABLE IF NOT EXISTS contribuicoes_meta (
 
 -- ------------------------------------------------------------
 -- 9. RATEIOS
--- Uma conta a ser dividida entre os membros do grupo
+-- Uma conta a ser dividida entre os membros do grupo.
+-- regra_rateio define a lógica de divisão (50_50, proporcional_renda, valor_fixo).
+-- status 'aberto' = pendente de pagamento; 'quitado' = todos pagaram.
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS rateios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -149,7 +156,9 @@ CREATE TABLE IF NOT EXISTS rateios (
 
 -- ------------------------------------------------------------
 -- 10. RATEIO_PARTICIPANTES
--- Quem deve quanto em cada rateio
+-- Quem deve quanto em cada rateio.
+-- UNIQUE (rateio_id, usuario_id) impede duplicatas do mesmo usuário num rateio.
+-- valor_devido é calculado no backend (rateio); valor_pago é atualizado quando paga.
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS rateio_participantes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

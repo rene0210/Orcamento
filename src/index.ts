@@ -12,9 +12,12 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORTA = 3000;
+// Segredo para assinar JWT. Em produção, deve vir de variável de ambiente.
 const JWT_SECRET = process.env.JWT_SECRET || 'orcamento-secreto-mudar-em-producao';
 
+// Middleware para parsear corpo JSON nas requisições
 app.use(express.json());
+// Serve arquivos estáticos do frontend buildado (Vite build -> frontend/dist)
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // ============================================================
@@ -449,6 +452,12 @@ app.get('/orcamentos/status', autenticarToken, (_req, res) => {
       return;
     }
 
+    // Calcula percentual consumido por categoria e classifica status:
+    // 'ok' = abaixo do limite de alerta
+    // 'alerta' = atingiu o % de alerta configurado (ex: 80%)
+    // 'estourou' = gasto >= valor_limite (100% ou mais)
+    // COALESCE trata categorias sem transações (retorna 0 em vez de NULL)
+    // NULLIF evita divisão por zero quando valor_limite = 0
     const status = db.prepare(`
       SELECT
         c.id as categoria_id,
@@ -488,7 +497,12 @@ app.get('/orcamentos/status', autenticarToken, (_req, res) => {
 });
 
 // ============================================================
-// RATEIOS - Divisão de contas
+// RATEIOS - Divisão de contas (diferencial técnico)
+// Três regras de negócio para calcular quem deve quanto a quem:
+//   1. 50_50: divide igualmente entre todos os membros
+//   2. proporcional_renda: cada um paga proporcional à sua renda
+//      (usa renda_mensal da tabela membros_grupo)
+//   3. valor_fixo: cada membro define um valor específico
 // ============================================================
 app.post('/rateios', autenticarToken, (req, res) => {
   try {
@@ -516,6 +530,7 @@ app.post('/rateios', autenticarToken, (req, res) => {
       return;
     }
 
+    // Busca membros e suas rendas (essencial para rateio proporcional)
     const membros = db.prepare(
       'SELECT usuario_id, renda_mensal FROM membros_grupo WHERE grupo_id = ?'
     ).all(grupo_id) as Array<{ usuario_id: number; renda_mensal: number }>;
@@ -529,11 +544,13 @@ app.post('/rateios', autenticarToken, (req, res) => {
     const participantes: RateioParticipante[] = [];
 
     if (regra_rateio === '50_50') {
+      // Divisão igualitária: valor total dividido pelo número de membros
       const valorPorPessoa = valor_total / membros.length;
       for (const m of membros) {
         participantes.push({ usuario_id: m.usuario_id, valor_devido: valorPorPessoa });
       }
     } else if (regra_rateio === 'proporcional_renda') {
+      // Rateio proporcional: valor_total * (renda_pessoa / renda_total_grupo)
       const rendaTotal = membros.reduce((soma, m) => soma + m.renda_mensal, 0);
 
       if (rendaTotal <= 0) {
@@ -549,6 +566,8 @@ app.post('/rateios', autenticarToken, (req, res) => {
         participantes.push({ usuario_id: m.usuario_id, valor_devido: valorDevido });
       }
     } else if (regra_rateio === 'valor_fixo') {
+      // Cada membro paga um valor definido manualmente
+      // Tolerância de 0.01 para evitar erros de ponto flutuante (0.1 + 0.2 !== 0.3)
       if (!valores_fixos || !Array.isArray(valores_fixos)) {
         res.status(400).json({
           erro: "valores_fixos é obrigatório para regra 'valor_fixo'",
@@ -815,9 +834,12 @@ app.post('/metas/:id/contribuicoes', autenticarToken, (req, res) => {
 });
 
 // ============================================================
-// IMPORTAÇÃO CSV / OFX
+// IMPORTAÇÃO CSV / OFX (parser próprio no backend)
+// Parser manual sem dependência externa. Converte arquivo de extrato
+// em transações no banco, com deduplicação implícita via origem='importado'.
 // ============================================================
 function parseCSV(conteudo: string): Array<Record<string, string>> {
+  // Separa linhas e extrai cabeçalho + dados. Primeira linha = nomes das colunas.
   const linhas = conteudo.trim().split(/\r?\n/);
   if (linhas.length < 2) return [];
 
@@ -838,7 +860,9 @@ function parseCSV(conteudo: string): Array<Record<string, string>> {
 }
 
 function parseOFX(conteudo: string): Array<Record<string, string>> {
-  // Parser simples de OFX - extrai transações STMTTRN
+  // OFX é um formato bancário legado (XML-like). Extrai blocos <STMTTRN>
+  // e converte DTPOSTED (YYYYMMDD) para ISO (YYYY-MM-DD).
+  // Valor positivo = receita, negativo = despesa.
   const transacoes: Array<Record<string, string>> = [];
   const blocos = conteudo.split(/<STMTTRN>/);
 
@@ -853,7 +877,6 @@ function parseOFX(conteudo: string): Array<Record<string, string>> {
     const valor = getTag('TRNAMT');
     const nome = getTag('NAME') || getTag('MEMO') || '';
 
-    // Converter data OFX (YYYYMMDD) para ISO
     let dataISO = '';
     if (dtPostado && dtPostado.length >= 8) {
       const ano = dtPostado.substring(0, 4);
@@ -875,8 +898,6 @@ function parseOFX(conteudo: string): Array<Record<string, string>> {
 
 app.post('/importacoes', autenticarToken, (req, res) => {
   try {
-    // Espera arquivo via multipart/form-data ou JSON com conteudo
-    // Para simplicidade, aceitamos JSON com { arquivo_nome, conteudo, grupo_id, formato }
     const { arquivo_nome, conteudo, grupo_id, formato } = req.body;
     const usuario_id = (req as any).usuario.usuario_id;
 
@@ -900,7 +921,7 @@ app.post('/importacoes', autenticarToken, (req, res) => {
       transacoes = parseOFX(conteudo);
     }
 
-    // Log da importação
+    // Registra log da importação para rastreabilidade
     const resultado = db.prepare(`
       INSERT INTO importacoes (grupo_id, usuario_id, arquivo_nome, formato, status, linhas_processadas)
       VALUES (?, ?, ?, ?, 'concluido', ?)
@@ -908,7 +929,8 @@ app.post('/importacoes', autenticarToken, (req, res) => {
 
     const importacaoId = Number(resultado.lastInsertRowid);
 
-    // Inserir transações (mesmas categoria_id padrão = 1 se existir, senão NULL)
+    // Insere cada transação importada. Usa categoria padrão do sistema (grupo_id IS NULL)
+    // quando não há categoria específica definida.
     const categoriaPadrao = db.prepare(
       'SELECT id FROM categorias WHERE grupo_id IS NULL LIMIT 1'
     ).get() as { id: number } | undefined;
@@ -934,7 +956,7 @@ app.post('/importacoes', autenticarToken, (req, res) => {
         );
         inseridas++;
       } catch {
-        // Ignora erros individuais de linha
+        // Ignora erros individuais de linha para não falhar toda a importação
       }
     }
 
@@ -982,6 +1004,8 @@ app.get('/relatorios/pdf', autenticarToken, (_req, res) => {
     `).all(`${mes}%`, grupo_id, mes);
 
     // Gerar PDF
+    // Gera PDF com pdfkit: transmite o documento diretamente na resposta HTTP
+    // (doc.pipe(res)) sem salvar arquivo temporário no disco.
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
     res.setHeader('Content-Type', 'application/pdf');

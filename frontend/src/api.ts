@@ -1,14 +1,20 @@
+// URL base da API. Em produção, vem de VITE_API_URL (variável de ambiente).
+// Em desenvolvimento, aponta para localhost:3000 (backend local).
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function baseURL(): string {
   return API_BASE;
 }
 
+// Recupera JWT do localStorage. Usado para autenticar requisições.
 function getToken(): string | null {
   if (typeof localStorage === 'undefined') return null;
   return localStorage.getItem('token');
 }
 
+// Função genérica de requisição HTTP.
+// Adiciona automaticamente o header Authorization: Bearer <token> se houver.
+// Se receber 401 (não autorizado), limpa o token e redireciona para login.
 async function request(
   endpoint: string,
   options: RequestInit = {}
@@ -28,6 +34,7 @@ async function request(
     headers,
   });
 
+  // Token expirado ou inválido: força logout e volta para tela de login
   if (response.status === 401) {
     localStorage.removeItem('token');
     window.location.href = '/login';
