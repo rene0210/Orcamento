@@ -1,45 +1,243 @@
 import express from 'express';
 import { db } from './db/connection.ts';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import PDFDocument from 'pdfkit';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORTA = 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'orcamento-secreto-mudar-em-producao';
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // ============================================================
-// ROTA DE SAÚDE
+// MIDDLEWARE DE AUTENTICAÇÃO JWT
 // ============================================================
-app.get('/health', (_req, res) => {
+interface TokenPayload {
+  usuario_id: number;
+  email: string;
+}
+
+function autenticarToken(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    res.status(401).json({ erro: 'Token de acesso não fornecido' });
+    return;
+  }
+
+  jwt.verify(token, JWT_SECRET, (erro, usuario) => {
+    if (erro) {
+      res.status(403).json({ erro: 'Token inválido ou expirado' });
+      return;
+    }
+    (req as any).usuario = usuario as TokenPayload;
+    next();
+  });
+}
+
+// ============================================================
+// AUTENTICAÇÃO
+// ============================================================
+app.post('/auth/registro', (req, res) => {
   try {
-    const resultado = db.prepare('SELECT 1 as ok').get() as { ok: number };
-    res.json({
-      status: 'ok',
-      mensagem: 'Servidor rodando!',
-      banco: resultado.ok === 1 ? 'conectado' : 'erro',
-      timestamp: new Date().toISOString(),
+    const { nome, email, senha } = req.body;
+
+    if (!nome || !email || !senha) {
+      res.status(400).json({ erro: 'nome, email e senha são obrigatórios' });
+      return;
+    }
+
+    const existente = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
+    if (existente) {
+      res.status(409).json({ erro: 'Email já cadastrado' });
+      return;
+    }
+
+    const senhaHash = bcrypt.hashSync(senha, 10);
+    const resultado = db.prepare(
+      'INSERT INTO usuarios (nome, email, senha_hash) VALUES (?, ?, ?)'
+    ).run(nome, email, senhaHash);
+
+    const token = jwt.sign(
+      { usuario_id: Number(resultado.lastInsertRowid), email },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.status(201).json({
+      mensagem: 'Usuário cadastrado com sucesso',
+      token,
+      usuario: { id: Number(resultado.lastInsertRowid), nome, email },
     });
   } catch (erro) {
-    res.status(500).json({
-      status: 'erro',
-      mensagem: 'Servidor no ar, mas banco não respondeu',
-      erro: erro instanceof Error ? erro.message : String(erro),
+    res.status(500).json({ erro: 'Falha ao cadastrar usuário' });
+  }
+});
+
+app.post('/auth/login', (req, res) => {
+  try {
+    const { email, senha } = req.body;
+
+    if (!email || !senha) {
+      res.status(400).json({ erro: 'email e senha são obrigatórios' });
+      return;
+    }
+
+    const usuario = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email) as {
+      id: number;
+      nome: string;
+      email: string;
+      senha_hash: string;
+    } | undefined;
+
+    if (!usuario) {
+      res.status(401).json({ erro: 'Email ou senha inválidos' });
+      return;
+    }
+
+    const senhaValida = bcrypt.compareSync(senha, usuario.senha_hash);
+    if (!senhaValida) {
+      res.status(401).json({ erro: 'Email ou senha inválidos' });
+      return;
+    }
+
+    const token = jwt.sign(
+      { usuario_id: usuario.id, email: usuario.email },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      mensagem: 'Login realizado com sucesso',
+      token,
+      usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email },
     });
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao fazer login' });
+  }
+});
+
+app.get('/auth/perfil', autenticarToken, (req, res) => {
+  const usuario = (req as any).usuario;
+  const u = db.prepare('SELECT id, nome, email FROM usuarios WHERE id = ?').get(usuario.usuario_id);
+  res.json({ usuario: u });
+});
+
+// ============================================================
+// GRUPOS E MEMBROS
+// ============================================================
+app.post('/grupos', autenticarToken, (req, res) => {
+  try {
+    const { nome, descricao } = req.body;
+    const usuario_id = (req as any).usuario.usuario_id;
+
+    if (!nome) {
+      res.status(400).json({ erro: 'nome é obrigatório' });
+      return;
+    }
+
+    const resultado = db.prepare(
+      'INSERT INTO grupos (nome, descricao, criado_por_id) VALUES (?, ?, ?)'
+    ).run(nome, descricao ?? null, usuario_id);
+
+    const grupoId = Number(resultado.lastInsertRowid);
+
+    // O criador vira admin do grupo
+    db.prepare(
+      'INSERT INTO membros_grupo (grupo_id, usuario_id, papel) VALUES (?, ?, ?)'
+    ).run(grupoId, usuario_id, 'admin');
+
+    res.status(201).json({
+      mensagem: 'Grupo criado com sucesso',
+      grupo_id: grupoId,
+    });
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao criar grupo' });
+  }
+});
+
+app.post('/grupos/:id/membros', autenticarToken, (req, res) => {
+  try {
+    const grupoId = Number(req.params.id);
+    const { usuario_email, renda_mensal } = req.body;
+    const solicitante_id = (req as any).usuario.usuario_id;
+
+    // Verificar se o solicitante é admin do grupo
+    const membroSolicitante = db.prepare(
+      'SELECT papel FROM membros_grupo WHERE grupo_id = ? AND usuario_id = ?'
+    ).get(grupoId, solicitante_id) as { papel: string } | undefined;
+
+    if (!membroSolicitante || membroSolicitante.papel !== 'admin') {
+      res.status(403).json({ erro: 'Apenas admin pode adicionar membros' });
+      return;
+    }
+
+    const usuarioConvidado = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(
+      usuario_email
+    ) as { id: number } | undefined;
+
+    if (!usuarioConvidado) {
+      res.status(404).json({ erro: 'Usuário não encontrado' });
+      return;
+    }
+
+    db.prepare(
+      'INSERT OR IGNORE INTO membros_grupo (grupo_id, usuario_id, papel, renda_mensal) VALUES (?, ?, ?, ?)'
+    ).run(grupoId, usuarioConvidado.id, 'membro', renda_mensal ?? 0);
+
+    res.json({ mensagem: 'Membro adicionado com sucesso' });
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao adicionar membro' });
+  }
+});
+
+app.get('/grupos', autenticarToken, (_req, res) => {
+  try {
+    const usuario_id = (_req as any).usuario.usuario_id;
+    const grupos = db.prepare(`
+      SELECT g.*, mg.papel, mg.renda_mensal
+      FROM grupos g
+      JOIN membros_grupo mg ON g.id = mg.grupo_id
+      WHERE mg.usuario_id = ?
+    `).all(usuario_id);
+    res.json(grupos);
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao buscar grupos' });
   }
 });
 
 // ============================================================
 // CATEGORIAS
 // ============================================================
-app.get('/categorias', (_req, res) => {
+app.get('/categorias', autenticarToken, (_req, res) => {
   try {
-    const categorias = db.prepare('SELECT * FROM categorias ORDER BY nome').all();
+    const grupo_id = (_req.query as Record<string, string>).grupo_id;
+    let sql = 'SELECT * FROM categorias WHERE grupo_id IS NULL';
+    const params: unknown[] = [];
+
+    if (grupo_id) {
+      sql += ' OR grupo_id = ?';
+      params.push(grupo_id);
+    }
+    sql += ' ORDER BY nome';
+
+    const categorias = db.prepare(sql).all(...params);
     res.json(categorias);
   } catch (erro) {
     res.status(500).json({ erro: 'Falha ao buscar categorias' });
   }
 });
 
-app.post('/categorias', (req, res) => {
+app.post('/categorias', autenticarToken, (req, res) => {
   try {
     const { nome, tipo, cor, icone, grupo_id } = req.body;
 
@@ -52,7 +250,9 @@ app.post('/categorias', (req, res) => {
       'INSERT INTO categorias (nome, tipo, cor, icone, grupo_id) VALUES (?, ?, ?, ?, ?)'
     ).run(nome, tipo, cor ?? '#6366f1', icone ?? 'wallet', grupo_id ?? null);
 
-    const novaCategoria = db.prepare('SELECT * FROM categorias WHERE id = ?').get(resultado.lastInsertRowid);
+    const novaCategoria = db.prepare('SELECT * FROM categorias WHERE id = ?').get(
+      resultado.lastInsertRowid
+    );
 
     res.status(201).json(novaCategoria);
   } catch (erro) {
@@ -63,7 +263,7 @@ app.post('/categorias', (req, res) => {
 // ============================================================
 // TRANSACOES
 // ============================================================
-app.get('/transacoes', (_req, res) => {
+app.get('/transacoes', autenticarToken, (_req, res) => {
   try {
     const { grupo_id, mes, tipo } = _req.query as Record<string, string>;
 
@@ -97,9 +297,18 @@ app.get('/transacoes', (_req, res) => {
   }
 });
 
-app.post('/transacoes', (req, res) => {
+app.post('/transacoes', autenticarToken, (req, res) => {
   try {
-    const { grupo_id, categoria_id, usuario_id, descricao, valor, tipo, data, observacao } = req.body;
+    const {
+      grupo_id,
+      categoria_id,
+      usuario_id,
+      descricao,
+      valor,
+      tipo,
+      data,
+      observacao,
+    } = req.body;
 
     if (!grupo_id || !categoria_id || !usuario_id || !descricao || !valor || !tipo || !data) {
       res.status(400).json({ erro: 'Todos os campos obrigatórios devem ser preenchidos' });
@@ -116,7 +325,9 @@ app.post('/transacoes', (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(grupo_id, categoria_id, usuario_id, descricao, valor, tipo, data, observacao ?? null);
 
-    const novaTransacao = db.prepare('SELECT * FROM transacoes WHERE id = ?').get(resultado.lastInsertRowid);
+    const novaTransacao = db.prepare('SELECT * FROM transacoes WHERE id = ?').get(
+      resultado.lastInsertRowid
+    );
 
     res.status(201).json(novaTransacao);
   } catch (erro) {
@@ -124,9 +335,11 @@ app.post('/transacoes', (req, res) => {
   }
 });
 
-app.get('/transacoes/:id', (req, res) => {
+app.get('/transacoes/:id', autenticarToken, (req, res) => {
   try {
-    const transacao = db.prepare('SELECT * FROM transacoes WHERE id = ?').get(Number(req.params.id));
+    const transacao = db.prepare('SELECT * FROM transacoes WHERE id = ?').get(
+      Number(req.params.id)
+    );
 
     if (!transacao) {
       res.status(404).json({ erro: 'Transação não encontrada' });
@@ -139,11 +352,13 @@ app.get('/transacoes/:id', (req, res) => {
   }
 });
 
-app.put('/transacoes/:id', (req, res) => {
+app.put('/transacoes/:id', autenticarToken, (req, res) => {
   try {
     const { descricao, valor, tipo, data, observacao, categoria_id } = req.body;
 
-    const existente = db.prepare('SELECT id FROM transacoes WHERE id = ?').get(Number(req.params.id));
+    const existente = db.prepare('SELECT id FROM transacoes WHERE id = ?').get(
+      Number(req.params.id)
+    );
     if (!existente) {
       res.status(404).json({ erro: 'Transação não encontrada' });
       return;
@@ -160,16 +375,20 @@ app.put('/transacoes/:id', (req, res) => {
       WHERE id = ?
     `).run(descricao, valor, tipo, data, observacao, categoria_id, Number(req.params.id));
 
-    const atualizada = db.prepare('SELECT * FROM transacoes WHERE id = ?').get(Number(req.params.id));
+    const atualizada = db.prepare('SELECT * FROM transacoes WHERE id = ?').get(
+      Number(req.params.id)
+    );
     res.json(atualizada);
   } catch (erro) {
     res.status(500).json({ erro: 'Falha ao atualizar transação' });
   }
 });
 
-app.delete('/transacoes/:id', (req, res) => {
+app.delete('/transacoes/:id', autenticarToken, (req, res) => {
   try {
-    const existente = db.prepare('SELECT id FROM transacoes WHERE id = ?').get(Number(req.params.id));
+    const existente = db.prepare('SELECT id FROM transacoes WHERE id = ?').get(
+      Number(req.params.id)
+    );
     if (!existente) {
       res.status(404).json({ erro: 'Transação não encontrada' });
       return;
@@ -185,12 +404,14 @@ app.delete('/transacoes/:id', (req, res) => {
 // ============================================================
 // ORCAMENTOS
 // ============================================================
-app.post('/orcamentos', (req, res) => {
+app.post('/orcamentos', autenticarToken, (req, res) => {
   try {
     const { grupo_id, categoria_id, mes, valor_limite, alerta_em } = req.body;
 
     if (!grupo_id || !categoria_id || !mes || !valor_limite) {
-      res.status(400).json({ erro: 'grupo_id, categoria_id, mes e valor_limite são obrigatórios' });
+      res.status(400).json({
+        erro: 'grupo_id, categoria_id, mes e valor_limite são obrigatórios',
+      });
       return;
     }
 
@@ -219,7 +440,7 @@ app.post('/orcamentos', (req, res) => {
   }
 });
 
-app.get('/orcamentos/status', (_req, res) => {
+app.get('/orcamentos/status', autenticarToken, (_req, res) => {
   try {
     const { grupo_id, mes } = _req.query as Record<string, string>;
 
@@ -259,7 +480,7 @@ app.get('/orcamentos/status', (_req, res) => {
     res.json({
       grupo_id,
       mes,
-      orcamentos: status
+      orcamentos: status,
     });
   } catch (erro) {
     res.status(500).json({ erro: 'Falha ao buscar status do orçamento' });
@@ -269,9 +490,7 @@ app.get('/orcamentos/status', (_req, res) => {
 // ============================================================
 // RATEIOS - Divisão de contas
 // ============================================================
-
-// POST /rateios — cria uma conta e calcula quem deve quanto
-app.post('/rateios', (req, res) => {
+app.post('/rateios', autenticarToken, (req, res) => {
   try {
     const {
       grupo_id,
@@ -381,8 +600,7 @@ app.post('/rateios', (req, res) => {
   }
 });
 
-// GET /rateios — lista rateios de um grupo
-app.get('/rateios', (_req, res) => {
+app.get('/rateios', autenticarToken, (_req, res) => {
   try {
     const { grupo_id } = _req.query as Record<string, string>;
 
@@ -420,8 +638,7 @@ app.get('/rateios', (_req, res) => {
   }
 });
 
-// POST /rateios/:id/pagar — marca a participação de um usuário como paga
-app.post('/rateios/:id/pagar', (req, res) => {
+app.post('/rateios/:id/pagar', autenticarToken, (req, res) => {
   try {
     const rateioId = Number(req.params.id);
     const { usuario_id } = req.body;
@@ -472,8 +689,7 @@ app.post('/rateios/:id/pagar', (req, res) => {
   }
 });
 
-// GET /rateios/resumo?grupo_id=1 — resumo de quem deve quanto a quem
-app.get('/rateios/resumo', (_req, res) => {
+app.get('/rateios/resumo', autenticarToken, (_req, res) => {
   try {
     const { grupo_id } = _req.query as Record<string, string>;
 
@@ -505,6 +721,336 @@ app.get('/rateios/resumo', (_req, res) => {
     });
   } catch (erro) {
     res.status(500).json({ erro: 'Falha ao buscar resumo de rateios' });
+  }
+});
+
+// ============================================================
+// METAS COMPARTILHADAS
+// ============================================================
+app.post('/metas', autenticarToken, (req, res) => {
+  try {
+    const { grupo_id, nome, descricao, valor_alvo, data_alvo } = req.body;
+
+    if (!grupo_id || !nome || !valor_alvo) {
+      res.status(400).json({ erro: 'grupo_id, nome e valor_alvo são obrigatórios' });
+      return;
+    }
+
+    const resultado = db.prepare(`
+      INSERT INTO metas (grupo_id, nome, descricao, valor_alvo, valor_guardado, data_alvo, status)
+      VALUES (?, ?, ?, ?, 0, ?, 'ativa')
+    `).run(grupo_id, nome, descricao ?? null, valor_alvo, data_alvo ?? null);
+
+    res.status(201).json({
+      mensagem: 'Meta criada com sucesso',
+      meta_id: Number(resultado.lastInsertRowid),
+    });
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao criar meta' });
+  }
+});
+
+app.get('/metas', autenticarToken, (_req, res) => {
+  try {
+    const { grupo_id } = _req.query as Record<string, string>;
+
+    if (!grupo_id) {
+      res.status(400).json({ erro: 'grupo_id é obrigatório' });
+      return;
+    }
+
+    const metas = db.prepare(`
+      SELECT m.*,
+             ROUND(m.valor_guardado * 100.0 / NULLIF(m.valor_alvo, 0), 2) as percentual_concluido
+      FROM metas m
+      WHERE m.grupo_id = ?
+      ORDER BY m.status, m.data_alvo
+    `).all(grupo_id);
+
+    res.json(metas);
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao buscar metas' });
+  }
+});
+
+app.post('/metas/:id/contribuicoes', autenticarToken, (req, res) => {
+  try {
+    const metaId = Number(req.params.id);
+    const { usuario_id, valor } = req.body;
+
+    if (!usuario_id || !valor) {
+      res.status(400).json({ erro: 'usuario_id e valor são obrigatórios' });
+      return;
+    }
+
+    const meta = db.prepare('SELECT * FROM metas WHERE id = ?').get(metaId);
+    if (!meta) {
+      res.status(404).json({ erro: 'Meta não encontrada' });
+      return;
+    }
+
+    db.prepare(
+      'INSERT INTO contribuicoes_meta (meta_id, usuario_id, valor) VALUES (?, ?, ?)'
+    ).run(metaId, usuario_id, valor);
+
+    const novoGuardado =
+      (meta as { valor_guardado: number }).valor_guardado + valor;
+    const novoStatus =
+      novoGuardado >= (meta as { valor_alvo: number }).valor_alvo ? 'concluida' : 'ativa';
+
+    db.prepare('UPDATE metas SET valor_guardado = ?, status = ? WHERE id = ?').run(
+      novoGuardado,
+      novoStatus,
+      metaId
+    );
+
+    res.json({
+      mensagem: 'Contribuição registrada com sucesso',
+      valor_guardado: novoGuardado,
+      status: novoStatus,
+    });
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao registrar contribuição' });
+  }
+});
+
+// ============================================================
+// IMPORTAÇÃO CSV / OFX
+// ============================================================
+function parseCSV(conteudo: string): Array<Record<string, string>> {
+  const linhas = conteudo.trim().split(/\r?\n/);
+  if (linhas.length < 2) return [];
+
+  const cabecalho = (linhas[0] as string)
+    .split(',')
+    .map((c) => c.trim().replace(/"/g, ''));
+
+  const resultados: Array<Record<string, string>> = [];
+  for (let i = 1; i < linhas.length; i++) {
+    const valores = (linhas[i] as string).split(',').map((v) => v.trim().replace(/"/g, ''));
+    const registro: Record<string, string> = {};
+    for (let j = 0; j < cabecalho.length; j++) {
+      registro[(cabecalho[j] as string)] = (valores[j] as string) ?? '';
+    }
+    resultados.push(registro);
+  }
+  return resultados;
+}
+
+function parseOFX(conteudo: string): Array<Record<string, string>> {
+  // Parser simples de OFX - extrai transações STMTTRN
+  const transacoes: Array<Record<string, string>> = [];
+  const blocos = conteudo.split(/<STMTTRN>/);
+
+  for (let i = 1; i < blocos.length; i++) {
+    const bloco = (blocos[i] as string);
+    const getTag = (tag: string) => {
+      const match = bloco.match(new RegExp(`<${tag}>([^<]*)</${tag}>`));
+      return match ? (match[1] as string).trim() : '';
+    };
+
+    const dtPostado = getTag('DTPOSTED');
+    const valor = getTag('TRNAMT');
+    const nome = getTag('NAME') || getTag('MEMO') || '';
+
+    // Converter data OFX (YYYYMMDD) para ISO
+    let dataISO = '';
+    if (dtPostado && dtPostado.length >= 8) {
+      const ano = dtPostado.substring(0, 4);
+      const mes = dtPostado.substring(4, 6);
+      const dia = dtPostado.substring(6, 8);
+      dataISO = `${ano}-${mes}-${dia}`;
+    }
+
+    transacoes.push({
+      data: dataISO,
+      descricao: nome,
+      valor: valor,
+      tipo: parseFloat(valor) >= 0 ? 'receita' : 'despesa',
+    });
+  }
+
+  return transacoes;
+}
+
+app.post('/importacoes', autenticarToken, (req, res) => {
+  try {
+    // Espera arquivo via multipart/form-data ou JSON com conteudo
+    // Para simplicidade, aceitamos JSON com { arquivo_nome, conteudo, grupo_id, formato }
+    const { arquivo_nome, conteudo, grupo_id, formato } = req.body;
+    const usuario_id = (req as any).usuario.usuario_id;
+
+    if (!arquivo_nome || !conteudo || !grupo_id || !formato) {
+      res.status(400).json({
+        erro: 'arquivo_nome, conteudo, grupo_id e formato são obrigatórios',
+      });
+      return;
+    }
+
+    if (!['csv', 'ofx'].includes(formato)) {
+      res.status(400).json({ erro: "formato deve ser 'csv' ou 'ofx'" });
+      return;
+    }
+
+    let transacoes: Array<Record<string, string>> = [];
+
+    if (formato === 'csv') {
+      transacoes = parseCSV(conteudo);
+    } else {
+      transacoes = parseOFX(conteudo);
+    }
+
+    // Log da importação
+    const resultado = db.prepare(`
+      INSERT INTO importacoes (grupo_id, usuario_id, arquivo_nome, formato, status, linhas_processadas)
+      VALUES (?, ?, ?, ?, 'concluido', ?)
+    `).run(grupo_id, usuario_id, arquivo_nome, formato, transacoes.length);
+
+    const importacaoId = Number(resultado.lastInsertRowid);
+
+    // Inserir transações (mesmas categoria_id padrão = 1 se existir, senão NULL)
+    const categoriaPadrao = db.prepare(
+      'SELECT id FROM categorias WHERE grupo_id IS NULL LIMIT 1'
+    ).get() as { id: number } | undefined;
+
+    const inserirTransacao = db.prepare(`
+      INSERT INTO transacoes (grupo_id, categoria_id, usuario_id, descricao, valor, tipo, data, observacao, origem, arquivo_origem)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'importado', ?)
+    `);
+
+    let inseridas = 0;
+    for (const t of transacoes) {
+      try {
+        inserirTransacao.run(
+          grupo_id,
+          categoriaPadrao?.id ?? null,
+          usuario_id,
+          (t.descricao as string) || 'Importado',
+          Math.abs(parseFloat((t.valor as string) || '0') || 0),
+          (t.tipo as string) || 'despesa',
+          (t.data as string) || new Date().toISOString().split('T')[0],
+          `Importado de ${arquivo_nome}`,
+          arquivo_nome
+        );
+        inseridas++;
+      } catch {
+        // Ignora erros individuais de linha
+      }
+    }
+
+    res.json({
+      mensagem: 'Importação concluída com sucesso',
+      importacao_id: importacaoId,
+      total_linhas: transacoes.length,
+      transacoes_inseridas: inseridas,
+    });
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao processar importação' });
+  }
+});
+
+// ============================================================
+// RELATÓRIO PDF
+// ============================================================
+app.get('/relatorios/pdf', autenticarToken, (_req, res) => {
+  try {
+    const { grupo_id, mes } = _req.query as Record<string, string>;
+
+    if (!grupo_id || !mes) {
+      res.status(400).json({ erro: 'grupo_id e mes são obrigatórios' });
+      return;
+    }
+
+    const transacoes = db.prepare(`
+      SELECT t.*, c.nome as categoria_nome, c.tipo as categoria_tipo
+      FROM transacoes t
+      JOIN categorias c ON t.categoria_id = c.id
+      WHERE t.grupo_id = ? AND t.data LIKE ?
+      ORDER BY t.data DESC
+    `).all(grupo_id, `${mes}%`);
+
+    const orcamentos = db.prepare(`
+      SELECT c.nome as categoria, o.valor_limite,
+             COALESCE(SUM(t.valor), 0) as gasto
+      FROM orcamentos o
+      JOIN categorias c ON o.categoria_id = c.id
+      LEFT JOIN transacoes t
+        ON t.categoria_id = c.id AND t.grupo_id = o.grupo_id
+        AND t.tipo = 'despesa' AND t.data LIKE ?
+      WHERE o.grupo_id = ? AND o.mes = ?
+      GROUP BY c.id, c.nome, o.valor_limite
+    `).all(`${mes}%`, grupo_id, mes);
+
+    // Gerar PDF
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=orcamento_${grupo_id}_${mes}.pdf`
+    );
+
+    doc.pipe(res);
+
+    doc.fontSize(20).text('Relatório de Orçamento', { align: 'center' });
+    doc.fontSize(12).text(`Grupo: ${grupo_id} | Mês: ${mes}`, { align: 'center' });
+    doc.moveDown();
+
+    doc.fontSize(14).text('Transações do Mês', { underline: true });
+    doc.moveDown(0.5);
+
+    let totalReceitas = 0;
+    let totalDespesas = 0;
+
+    for (const t of transacoes as Array<any>) {
+      const valor = Number(t.valor);
+      if (t.tipo === 'receita') totalReceitas += valor;
+      else totalDespesas += valor;
+
+      doc
+        .fontSize(10)
+        .text(
+          `${t.data} | ${t.descricao} | ${t.categoria_nome} | R$ ${valor.toFixed(2)} (${
+            t.tipo
+          })`
+        );
+    }
+
+    doc.moveDown();
+    doc.fillColor('green').fontSize(12).text(`Total Receitas: R$ ${totalReceitas.toFixed(2)}`);
+    doc.fillColor('red').fontSize(12).text(`Total Despesas: R$ ${totalDespesas.toFixed(2)}`);
+    doc.fillColor('#1e293b').fontSize(12).text(`Saldo: R$ ${(totalReceitas - totalDespesas).toFixed(2)}`);
+
+    doc.moveDown();
+    doc.fontSize(14).text('Orçamento por Categoria', { underline: true });
+    doc.moveDown(0.5);
+
+    for (const o of orcamentos as Array<any>) {
+      const gasto = Number(o.gasto);
+      const limite = Number(o.valor_limite);
+      const pct = limite > 0 ? ((gasto / limite) * 100).toFixed(1) : '0';
+      doc
+        .fontSize(10)
+        .text(
+          `${o.categoria}: R$ ${gasto.toFixed(2)} / R$ ${limite.toFixed(2)} (${pct}%)`
+        );
+    }
+
+    doc.end();
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao gerar relatório PDF' });
+  }
+});
+
+// ============================================================
+// SERVIR FRONTEND (SPA fallback)
+// ============================================================
+app.get('*', (_req, res) => {
+  const indexPath = path.join(__dirname, '../frontend/dist/index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({ erro: 'Frontend não encontrado. Execute npm run build no frontend.' });
   }
 });
 

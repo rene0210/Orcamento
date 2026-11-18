@@ -1,0 +1,120 @@
+import { useState } from 'react';
+import { api } from '../api';
+
+
+export function Importar() {
+  const [arquivo, setArquivo] = useState<File | null>(null);
+  const [conteudo, setConteudo] = useState('');
+  const [formato, setFormato] = useState<'csv' | 'ofx'>('csv');
+  const [grupo_id, setGrupoId] = useState('');
+  const [resultado, setResultado] = useState<any>(null);
+  const [erro, setErro] = useState('');
+
+  async function handleArquivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setArquivo(file);
+    setErro('');
+
+    const texto = await file.text();
+    setConteudo(texto);
+
+    if (file.name.toLowerCase().endsWith('.ofx')) {
+      setFormato('ofx');
+    } else {
+      setFormato('csv');
+    }
+  }
+
+  async function handleImportar() {
+    if (!arquivo || !grupo_id) {
+      setErro('Selecione um arquivo e informe o ID do grupo.');
+      return;
+    }
+    setErro('');
+    setResultado(null);
+
+    try {
+      const resposta = await api.importarExtrato({
+        arquivo_nome: arquivo.name,
+        conteudo,
+        grupo_id,
+        formato,
+      });
+      setResultado(resposta);
+    } catch (err: any) {
+      setErro(err.message || 'Erro ao importar');
+    }
+  }
+
+  return (
+    <div>
+      <div className="page-header">
+        <h1>Importar Extrato</h1>
+      </div>
+
+      <div className="card">
+        <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
+          Importar CSV ou OFX
+        </h2>
+
+        <div className="form-group">
+          <label>Arquivo</label>
+          <input
+            type="file"
+            accept=".csv,.ofx"
+            onChange={handleArquivo}
+          />
+          {arquivo && (
+            <p style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.25rem' }}>
+              {arquivo.name} ({formato.toUpperCase()})
+            </p>
+          )}
+        </div>
+
+        <div className="form-group">
+          <label>ID do Grupo</label>
+          <input
+            type="number"
+            value={grupo_id}
+            onChange={(e) => setGrupoId(e.target.value)}
+            required
+            className="form-group-input"
+          />
+        </div>
+
+        <button
+          onClick={handleImportar}
+          className="btn btn-primary"
+          disabled={!arquivo || !grupo_id}
+        >
+          ⬆ Importar Extrato
+        </button>
+
+        {erro && (
+          <div className="alert alert-error" style={{ marginTop: '1rem' }}>
+            {erro}
+          </div>
+        )}
+
+        {resultado && (
+          <div className="alert alert-success" style={{ marginTop: '1rem' }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Importação Concluída</h3>
+            <p><strong>Arquivo:</strong> {resultado.importacao_id}</p>
+            <p><strong>Linhas processadas:</strong> {resultado.total_linhas}</p>
+            <p><strong>Transações inseridas:</strong> {resultado.transacoes_inseridas}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="card" style={{ marginTop: '1.5rem' }}>
+        <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
+          Pré-visualização do Conteúdo
+        </h2>
+        <pre style={{ fontSize: '0.75rem', background: '#f8fafc', padding: '1rem', borderRadius: '0.5rem', overflow: 'auto', maxHeight: '300px' }}>
+          {conteudo.slice(0, 2000)}
+        </pre>
+      </div>
+    </div>
+  );
+}

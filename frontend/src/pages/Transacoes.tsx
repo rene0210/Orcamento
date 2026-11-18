@@ -1,0 +1,253 @@
+import { useEffect, useState } from 'react';
+import { api } from '../api';
+import { Plus } from 'lucide-react';
+
+export function Transacoes() {
+  const [transacoes, setTransacoes] = useState<any[]>([]);
+  const [grupo_id, setGrupoId] = useState('');
+  const [mes, setMes] = useState('');
+  const [tipo, setTipo] = useState('');
+  const [nova, setNova] = useState(false);
+  const [form, setForm] = useState({
+    grupo_id: '',
+    categoria_id: '',
+    usuario_id: '',
+    descricao: '',
+    valor: '',
+    tipo: 'despesa' as const,
+    data: new Date().toISOString().slice(0, 10),
+    observacao: '',
+  });
+  const [categorias, setCategorias] = useState<any[]>([]);
+
+  useEffect(() => {
+    api.listarTransacoes().then(setTransacoes);
+    api.listarCategorias().then(setCategorias);
+  }, []);
+
+  useEffect(() => {
+    if (grupo_id || mes || tipo) {
+      api.listarTransacoes({ grupo_id, mes, tipo }).then(setTransacoes);
+    } else {
+      api.listarTransacoes().then(setTransacoes);
+    }
+  }, [grupo_id, mes, tipo]);
+
+  const total = transacoes.reduce(
+    (s, t) => s + (t.tipo === 'receita' ? Number(t.valor) : -Number(t.valor)),
+    0
+  );
+
+  async function criarTransacao(e: React.FormEvent) {
+    e.preventDefault();
+    await api.criarTransacao(form);
+    setNova(false);
+    setForm({
+      grupo_id: '',
+      categoria_id: '',
+      usuario_id: '',
+      descricao: '',
+      valor: '',
+      tipo: 'despesa',
+      data: new Date().toISOString().slice(0, 10),
+      observacao: '',
+    });
+    api.listarTransacoes().then(setTransacoes);
+  }
+
+  return (
+    <div>
+      <div className="page-header">
+        <h1>Transações</h1>
+        <button
+          onClick={() => setNova(!nova)}
+          className={`btn ${nova ? 'btn-secondary' : 'btn-primary'} btn-sm`}
+        >
+          <Plus size={18} /> {nova ? 'Cancelar' : 'Nova Transação'}
+        </button>
+      </div>
+
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Saldo do Período</h3>
+        <div className="valor" style={{ fontSize: '2rem', fontWeight: '700' }}>
+          R$ {total.toFixed(2)}
+        </div>
+      </div>
+
+      <div className="card">
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Grupo</label>
+            <input
+              type="text"
+              placeholder="ID do grupo"
+              value={grupo_id}
+              onChange={(e) => setGrupoId(e.target.value)}
+              className="form-group-input"
+            />
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Mês</label>
+            <input
+              type="month"
+              value={mes}
+              onChange={(e) => setMes(e.target.value)}
+              className="form-group-input"
+            />
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Tipo</label>
+            <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="form-group-input">
+              <option value="">Todos</option>
+              <option value="receita">Receita</option>
+              <option value="despesa">Despesa</option>
+            </select>
+          </div>
+        </div>
+
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Tipo</th>
+              <th>Valor</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transacoes.map((t) => (
+              <tr key={t.id}>
+                <td>{t.data}</td>
+                <td>{t.descricao}</td>
+                <td>{t.categoria_nome}</td>
+                <td>
+                  <span className={`badge ${t.tipo === 'receita' ? 'badge-ok' : 'badge-estourou'}`}>
+                    {t.tipo}
+                  </span>
+                </td>
+                <td>R$ {Number(t.valor).toFixed(2)}</td>
+                <td>
+                  <button
+                    onClick={() =>
+                      api.deletarTransacao(t.id).then(() =>
+                        api.listarTransacoes({ grupo_id, mes, tipo }).then(setTransacoes)
+                      )
+                    }
+                    className="btn btn-danger btn-sm"
+                  >
+                    Excluir
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {nova && (
+        <div className="card" style={{ marginTop: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
+            Nova Transação
+          </h2>
+          <form onSubmit={criarTransacao} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-group">
+              <label>Grupo ID</label>
+              <input
+                type="number"
+                value={form.grupo_id}
+                onChange={(e) => setForm({ ...form, grupo_id: e.target.value })}
+                required
+                className="form-group-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Categoria ID</label>
+              <select
+                value={form.categoria_id}
+                onChange={(e) => setForm({ ...form, categoria_id: e.target.value })}
+                required
+                className="form-group-input"
+              >
+                <option value="">Selecione</option>
+                {categorias.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome} ({c.tipo})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Usuário ID</label>
+              <input
+                type="number"
+                value={form.usuario_id}
+                onChange={(e) => setForm({ ...form, usuario_id: e.target.value })}
+                required
+                className="form-group-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Tipo</label>
+              <select
+                value={form.tipo}
+                onChange={(e) => setForm({ ...form, tipo: e.target.value as any })}
+                required
+                className="form-group-input"
+              >
+                <option value="receita">Receita</option>
+                <option value="despesa">Despesa</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label>Descrição</label>
+              <input
+                type="text"
+                value={form.descricao}
+                onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                required
+                className="form-group-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Valor</label>
+              <input
+                type="number"
+                step="0.01"
+                value={form.valor}
+                onChange={(e) => setForm({ ...form, valor: e.target.value })}
+                required
+                className="form-group-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Data</label>
+              <input
+                type="date"
+                value={form.data}
+                onChange={(e) => setForm({ ...form, data: e.target.value })}
+                required
+                className="form-group-input"
+              />
+            </div>
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label>Observação</label>
+              <input
+                type="text"
+                value={form.observacao}
+                onChange={(e) => setForm({ ...form, observacao: e.target.value })}
+                className="form-group-input"
+              />
+            </div>
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <button type="submit" className="btn btn-primary">
+                Salvar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
