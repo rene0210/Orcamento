@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { LogOut, Menu, User } from 'lucide-react';
+import { LogOut, Menu, PieChart, User } from 'lucide-react';
 
 export function Navbar() {
   const token = localStorage.getItem('token');
@@ -12,6 +12,7 @@ export function Navbar() {
         { to: '/metas', label: 'Metas' },
         { to: '/rateios', label: 'Rateios' },
         { to: '/importar', label: 'Importar' },
+        { to: '/relatorios', label: 'Relatórios' },
       ]
     : [];
 

@@ -1,5 +1,9 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+export function baseURL(): string {
+  return API_BASE;
+}
+
 function getToken(): string | null {
   if (typeof localStorage === 'undefined') return null;
   return localStorage.getItem('token');
@@ -115,4 +119,10 @@ export const api = {
     fetch(`${API_BASE}/relatorios/pdf?grupo_id=${grupo_id}&mes=${mes}`, {
       headers: { Authorization: `Bearer ${getToken()}` },
     }),
+
+  // Relatórios para gráficos
+  relatoriosGraficosCategoria: (grupo_id: string, mes: string) =>
+    request(`/relatorios/gastos-categoria?grupo_id=${grupo_id}&mes=${mes}`),
+  relatoriosEvolucaoMensal: (grupo_id: string) =>
+    request(`/relatorios/evolucao-mensal?grupo_id=${grupo_id}`),
 };

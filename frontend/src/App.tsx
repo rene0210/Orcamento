@@ -10,6 +10,7 @@ import { Orcamentos } from './pages/Orcamentos';
 import { Metas } from './pages/Metas';
 import { Rateios } from './pages/Rateios';
 import { Importar } from './pages/Importar';
+import { Relatorios } from './pages/Relatorios';
 
 export default function App() {
   return (
@@ -64,6 +65,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Importar />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/relatorios"
+            element={
+              <ProtectedRoute>
+                <Relatorios />
               </ProtectedRoute>
             }
           />

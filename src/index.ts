@@ -1042,6 +1042,120 @@ app.get('/relatorios/pdf', autenticarToken, (_req, res) => {
   }
 });
 
+// ============================================================
+// RELATÓRIOS PARA GRÁFICOS (Frontend)
+// ============================================================
+
+// GET /relatorios/gastos-categoria?grupo_id=1&mes=2026-10
+// Retorna soma de despesas por categoria (para gráfico de pizza)
+app.get('/relatorios/gastos-categoria', autenticarToken, (_req, res) => {
+  try {
+    const { grupo_id, mes } = _req.query as Record<string, string>;
+
+    if (!grupo_id || !mes) {
+      res.status(400).json({ erro: 'grupo_id e mes são obrigatórios' });
+      return;
+    }
+
+    const dados = db.prepare(`
+      SELECT
+        c.nome as categoria,
+        ROUND(COALESCE(SUM(t.valor), 0), 2) as total
+      FROM categorias c
+      LEFT JOIN transacoes t
+        ON t.categoria_id = c.id
+        AND t.grupo_id = ?
+        AND t.tipo = 'despesa'
+        AND t.data LIKE ?
+      WHERE c.grupo_id = ? OR c.grupo_id IS NULL
+      GROUP BY c.id, c.nome
+      HAVING total > 0
+      ORDER BY total DESC
+    `).all(grupo_id, `${mes}%`, grupo_id);
+
+    res.json({
+      grupo_id,
+      mes,
+      dados,
+    });
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao buscar gastos por categoria' });
+  }
+});
+
+// GET /relatorios/evolucao-mensal?grupo_id=1
+// Retorna receitas e despesas por mês (últimos 6 meses) - gráfico de linha
+app.get('/relatorios/evolucao-mensal', autenticarToken, (_req, res) => {
+  try {
+    const { grupo_id } = _req.query as Record<string, string>;
+
+    if (!grupo_id) {
+      res.status(400).json({ erro: 'grupo_id é obrigatório' });
+      return;
+    }
+
+    const dados = db.prepare(`
+      SELECT
+        substr(data, 1, 7) as mes,
+        ROUND(SUM(CASE WHEN tipo = 'receita' THEN valor ELSE 0 END), 2) as receitas,
+        ROUND(SUM(CASE WHEN tipo = 'despesa' THEN valor ELSE 0 END), 2) as despesas
+      FROM transacoes
+      WHERE grupo_id = ?
+      GROUP BY substr(data, 1, 7)
+      ORDER BY mes DESC
+      LIMIT 6
+    `).all(grupo_id);
+
+    res.json({
+      grupo_id,
+      dados: dados.reverse(), // ordem cronológica
+    });
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao buscar evolução mensal' });
+  }
+});
+
+// GET /exportar/csv?grupo_id=1
+// Exporta todas as transações do grupo em formato CSV
+app.get('/exportar/csv', autenticarToken, (_req, res) => {
+  try {
+    const { grupo_id } = _req.query as Record<string, string>;
+
+    if (!grupo_id) {
+      res.status(400).json({ erro: 'grupo_id é obrigatório' });
+      return;
+    }
+
+    const transacoes = db.prepare(`
+      SELECT t.data, t.descricao, c.nome as categoria, c.tipo as tipo_transacao,
+             t.valor, t.observacao
+      FROM transacoes t
+      JOIN categorias c ON t.categoria_id = c.id
+      WHERE t.grupo_id = ?
+      ORDER BY t.data DESC
+    `).all(grupo_id) as Array<Record<string, unknown>>;
+
+    // Cabeçalho CSV
+    const cabecalho = 'Data,Descricao,Categoria,Tipo,Valor,Observacao\n';
+
+    const linhas = transacoes.map((t) =>
+      `"${t.data}","${t.descricao}","${t.categoria}","${t.tipo_transacao}",${t.valor},"${t.observacao ?? ''}"`
+    ).join('\n');
+
+    const csv = cabecalho + linhas;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=transacoes_grupo_${grupo_id}_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+
+    res.send(csv);
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao exportar CSV' });
+  }
+});
+
 app.listen(PORTA, () => {
   console.log(`🚀 Servidor rodando em http://localhost:${PORTA}`);
 });
