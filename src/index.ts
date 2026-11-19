@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { db } from './db/connection.ts';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -19,6 +20,20 @@ const JWT_SECRET = process.env.JWT_SECRET || 'orcamento-secreto-mudar-em-produca
 
 // Middleware para parsear corpo JSON nas requisições
 app.use(express.json());
+// CORS: libera chamadas cross-origin apenas dos domínios do frontend
+// (Vercel em produção e Vite em desenvolvimento local).
+// Sem isso, o navegador bloqueia as requisições da API (Railway).
+app.use(
+  cors({
+    origin: [
+      'https://orcamento-compartilhado.vercel.app',
+      'https://orcamento-compartilhado-c2vipycwi-rene0210s-projects.vercel.app',
+      'http://localhost:5173',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 // Serve arquivos estáticos do frontend buildado (Vite build -> frontend/dist)
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
