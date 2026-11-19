@@ -11,7 +11,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORTA = 3000;
+// Em produção (Railway/Render) a porta vem da variável de ambiente PORT;
+// em desenvolvimento local usa 3000 como fallback.
+const PORTA = process.env.PORT || 3000;
 // Segredo para assinar JWT. Em produção, deve vir de variável de ambiente.
 const JWT_SECRET = process.env.JWT_SECRET || 'orcamento-secreto-mudar-em-producao';
 
@@ -46,6 +48,14 @@ function autenticarToken(req: express.Request, res: express.Response, next: expr
     next();
   });
 }
+
+// ============================================================
+// HEALTHCHECK (usado por Railway/Render para verificar se o
+// serviço está no ar; responde sem exigir autenticação)
+// ============================================================
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
 
 // ============================================================
 // AUTENTICAÇÃO

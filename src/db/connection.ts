@@ -25,4 +25,17 @@ export const db: BetterSqlite3Database = new Database(dbPath);
 // Ativa integridade referencial (chaves estrangeiras)
 db.pragma('foreign_keys = ON');
 
+// Cria as tabelas automaticamente se o banco estiver vazio.
+// Essencial em produção (Railway/Render): o arquivo .db nasce inexistente
+// no ambiente do servidor e o init.ts não roda por lá.
+const tabelaExiste = db
+  .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='usuarios'")
+  .get();
+
+if (!tabelaExiste) {
+  const schemaPath = path.resolve(__dirname, '../../database/schema.sql');
+  db.exec(fs.readFileSync(schemaPath, 'utf-8'));
+  console.log('✅ Tabelas criadas automaticamente a partir do schema.sql');
+}
+
 console.log(`📁 Banco de dados conectado: ${dbPath}`);
