@@ -24,10 +24,10 @@ DELETE FROM sqlite_sequence WHERE name IN (
   'rateio_participantes','importacoes'
 );
 
--- 1. Dois usuários
+-- 1. Dois usuários (senha de ambos: senha123 — hash bcrypt real)
 INSERT INTO usuarios (nome, email, senha_hash) VALUES
-  ('Ana Silva', 'ana@email.com', 'hash_ana_123'),
-  ('Bruno Silva', 'bruno@email.com', 'hash_bruno_123');
+  ('Ana Silva', 'ana@email.com', '$2b$10$V.HaG.cG3zsFr2rMBJvww.HLi3rv4iN6nHPJn3D9yaLRpJchd1c6G'),
+  ('Bruno Silva', 'bruno@email.com', '$2b$10$6h1GXPoQU6g6LrtEuB1C.uDdSIJfVa3eGIrjG5ygdwLGXU/8CxHOm');
 
 -- 2. Um grupo (casal)
 INSERT INTO grupos (nome, descricao, criado_por_id) VALUES
@@ -48,35 +48,36 @@ INSERT INTO categorias (grupo_id, nome, tipo, cor, icone) VALUES
   (NULL, 'Lazer', 'despesa', '#a855f7', 'film'),
   (1, 'Viagem Japão', 'despesa', '#10b981', 'plane'); -- categoria do grupo
 
--- 5. Transações de outubro/2026
+-- 5. Transações do mês ATUAL (datas relativas: o seed sempre mostra dados
+--     no mês corrente, independentemente da data em que o app for executado)
 INSERT INTO transacoes (grupo_id, categoria_id, usuario_id, descricao, valor, tipo, data, observacao, origem) VALUES
-  (1, 1, 1, 'Salário Ana', 6000, 'receita', '2026-10-05', 'Salário mensal', 'manual'),
-  (1, 1, 2, 'Salário Bruno', 4000, 'receita', '2026-10-05', 'Salário mensal', 'manual'),
-  (1, 2, 1, 'Supermercado', 450, 'despesa', '2026-10-07', 'Arroz, feijão, carne', 'manual'),
-  (1, 3, 2, 'Aluguel', 1800, 'despesa', '2026-10-01', 'Aluguel do apartamento', 'manual'),
-  (1, 4, 1, 'Uber', 35, 'despesa', '2026-10-10', 'Corrida até o shopping', 'manual'),
-  (1, 5, 2, 'Cinema', 60, 'despesa', '2026-10-12', 'Ingresso + pipoca', 'manual'),
-  (1, 6, 1, 'Passagem aérea', 1200, 'despesa', '2026-10-14', 'Reserva para dezembro', 'manual');
+  (1, 1, 1, 'Salário Ana', 6000, 'receita', date('now','start of month','+4 days'), 'Salário mensal', 'manual'),
+  (1, 1, 2, 'Salário Bruno', 4000, 'receita', date('now','start of month','+4 days'), 'Salário mensal', 'manual'),
+  (1, 2, 1, 'Supermercado', 450, 'despesa', date('now','start of month','+6 days'), 'Arroz, feijão, carne', 'manual'),
+  (1, 3, 2, 'Aluguel', 1800, 'despesa', date('now','start of month'), 'Aluguel do apartamento', 'manual'),
+  (1, 4, 1, 'Uber', 35, 'despesa', date('now','start of month','+9 days'), 'Corrida até o shopping', 'manual'),
+  (1, 5, 2, 'Cinema', 60, 'despesa', date('now','start of month','+11 days'), 'Ingresso + pipoca', 'manual'),
+  (1, 6, 1, 'Passagem aérea', 1200, 'despesa', date('now','start of month','+13 days'), 'Reserva para dezembro', 'manual');
 
--- 6. Orçamento mensal (outubro/2026)
+-- 6. Orçamento mensal do mês ATUAL
 INSERT INTO orcamentos (grupo_id, categoria_id, mes, valor_limite, alerta_em) VALUES
-  (1, 2, '2026-10', 800, 80),   -- Alimentação: R$ 800, alerta a 80%
-  (1, 3, '2026-10', 2000, 90),  -- Moradia: R$ 2000, alerta a 90%
-  (1, 4, '2026-10', 300, 80),   -- Transporte: R$ 300, alerta a 80%
-  (1, 5, '2026-10', 400, 80);   -- Lazer: R$ 400, alerta a 80%
+  (1, 2, strftime('%Y-%m','now'), 800, 80),   -- Alimentação: R$ 800, alerta a 80%
+  (1, 3, strftime('%Y-%m','now'), 2000, 90),  -- Moradia: R$ 2000, alerta a 90%
+  (1, 4, strftime('%Y-%m','now'), 300, 80),   -- Transporte: R$ 300, alerta a 80%
+  (1, 5, strftime('%Y-%m','now'), 400, 80);   -- Lazer: R$ 400, alerta a 80%
 
 -- 7. Meta compartilhada: viagem
 INSERT INTO metas (grupo_id, nome, descricao, valor_alvo, valor_guardado, data_alvo, status) VALUES
   (1, 'Viagem para o Japão', 'Fundo de viagem de férias', 15000, 3500, '2027-03-01', 'ativa');
 
--- 8. Contribuições para a meta
+-- 8. Contribuições para a meta (mês passado)
 INSERT INTO contribuicoes_meta (meta_id, usuario_id, valor, data) VALUES
-  (1, 1, 2000, '2026-09-01'),
-  (1, 2, 1500, '2026-09-15');
+  (1, 1, 2000, date('now','start of month','-5 days')),
+  (1, 2, 1500, date('now','start of month','-1 day'));
 
 -- 9. Rateio de conta de luz (proporcional à renda)
 INSERT INTO rateios (grupo_id, descricao, valor_total, regra_rateio, data_vencimento, status, criado_por_id) VALUES
-  (1, 'Conta de luz - outubro', 280, 'proporcional_renda', '2026-10-20', 'aberto', 1);
+  (1, 'Conta de luz', 280, 'proporcional_renda', date('now','start of month','+19 days'), 'aberto', 1);
 
 -- Participantes do rateio de luz:
 -- Renda total = 10.000. Ana = 60%, Bruno = 40%
@@ -87,7 +88,7 @@ INSERT INTO rateio_participantes (rateio_id, usuario_id, valor_devido, valor_pag
 
 -- 10. Rateio de internet (50/50)
 INSERT INTO rateios (grupo_id, descricao, valor_total, regra_rateio, data_vencimento, status, criado_por_id) VALUES
-  (1, 'Internet fibra - outubro', 100, '50_50', '2026-10-15', 'aberto', 2);
+  (1, 'Internet fibra', 100, '50_50', date('now','start of month','+14 days'), 'quitado', 2);
 
 INSERT INTO rateio_participantes (rateio_id, usuario_id, valor_devido, valor_pago, status) VALUES
   (2, 1, 50, 50, 'pago'),

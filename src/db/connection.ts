@@ -38,4 +38,17 @@ if (!tabelaExiste) {
   console.log('✅ Tabelas criadas automaticamente a partir do schema.sql');
 }
 
+// Seed automático: se o banco nasceu vazio (deploy novo no Railway/Render),
+// popula com dados de demonstração. Assim o app nunca fica "em branco" em
+// produção. Rode apenas uma vez (checa se já existe usuário).
+const usuariosExistentes = db.prepare('SELECT COUNT(*) as total FROM usuarios').get() as {
+  total: number;
+};
+
+if (usuariosExistentes.total === 0) {
+  const seedPath = path.resolve(__dirname, '../../database/seed.sql');
+  db.exec(fs.readFileSync(seedPath, 'utf-8'));
+  console.log('🌱 Dados de demonstração inseridos (ana@email.com / senha123)');
+}
+
 console.log(`📁 Banco de dados conectado: ${dbPath}`);

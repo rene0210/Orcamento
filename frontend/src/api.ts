@@ -34,15 +34,30 @@ async function request(
     headers,
   });
 
-  // Token expirado ou inválido: força logout e volta para tela de login
+  // Token expirado ou inválido: força logout e volta para tela de login.
+  // Só redireciona se existia uma sessão ativa (havia token) — assim um
+  // erro de login (senha errada) mostra a mensagem em vez de recarregar
+  // a página e apagar o formulário.
   if (response.status === 401) {
+    const sessaoAtiva = !!getToken();
     localStorage.removeItem('token');
-    window.location.href = '/login';
+    if (sessaoAtiva && window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
   }
 
   if (!response.ok) {
     const errorBody = await response.text().catch(() => '');
-    throw new Error(errorBody || `Erro ${response.status}`);
+    // Tenta extrair a mensagem amigável do JSON de erro do backend
+    // (ex: {"erro": "Email ou senha inválidos"}) em vez de mostrar o JSON cru.
+    let mensagem = errorBody || `Erro ${response.status}`;
+    try {
+      const corpo = JSON.parse(errorBody);
+      if (corpo && corpo.erro) mensagem = corpo.erro;
+    } catch {
+      // corpo não é JSON: mantém o texto original
+    }
+    throw new Error(mensagem);
   }
 
   if (response.status === 204) return null;
