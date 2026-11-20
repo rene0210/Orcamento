@@ -19,10 +19,13 @@ export function Transacoes() {
     observacao: '',
   });
   const [categorias, setCategorias] = useState<any[]>([]);
+  const [grupos, setGrupos] = useState<any[]>([]);
 
   useEffect(() => {
     api.listarTransacoes().then(setTransacoes);
     api.listarCategorias().then(setCategorias);
+    // Carrega os grupos para o filtro (em vez de exigir o ID numérico)
+    api.listarGrupos().then(setGrupos).catch(() => setGrupos([]));
   }, []);
 
   useEffect(() => {
@@ -78,13 +81,18 @@ export function Transacoes() {
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Grupo</label>
-            <input
-              type="text"
-              placeholder="ID do grupo"
+            <select
               value={grupo_id}
               onChange={(e) => setGrupoId(e.target.value)}
               className="form-group-input"
-            />
+            >
+              <option value="">Todos os grupos</option>
+              {grupos.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.nome}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Mês</label>

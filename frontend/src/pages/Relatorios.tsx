@@ -23,7 +23,11 @@ export function Relatorios() {
   const [graficoEvolucao, setGraficoEvolucao] = useState<any[]>([]);
 
   useEffect(() => {
-    api.listarGrupos().then(setGrupos);
+    // Seleciona automaticamente o primeiro grupo do usuário
+    api.listarGrupos().then((lista: any[]) => {
+      setGrupos(lista);
+      if (lista.length > 0) setGrupoId(String(lista[0].id));
+    });
   }, []);
 
   useEffect(() => {
