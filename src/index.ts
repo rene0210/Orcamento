@@ -38,6 +38,31 @@ app.use(
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // ============================================================
+// NAVEGAÇÃO DIRETA DE PÁGINA (deep link)
+// Rotas como /transacoes, /metas e /rateios colidem com rotas de API.
+// Quando o navegador pede o documento (Accept: text/html) sem o header
+// Authorization, devolvemos o index.html do React em vez de JSON/401.
+// ============================================================
+const ROTAS_PAGINA = [
+  '/dashboard', '/transacoes', '/orcamentos', '/metas',
+  '/rateios', '/importar', '/relatorios', '/login', '/cadastro',
+];
+
+app.use((req, res, next) => {
+  const ehDocumento =
+    req.method === 'GET' &&
+    ROTAS_PAGINA.includes(req.path) &&
+    !req.headers.authorization &&
+    (req.headers.accept || '').includes('text/html');
+
+  if (ehDocumento) {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+    return;
+  }
+  next();
+});
+
+// ============================================================
 // MIDDLEWARE DE AUTENTICAÇÃO JWT
 // ============================================================
 interface TokenPayload {
@@ -1203,6 +1228,28 @@ app.get('/exportar/csv', autenticarToken, (_req, res) => {
   } catch (erro) {
     res.status(500).json({ erro: 'Falha ao exportar CSV' });
   }
+});
+
+// ============================================================
+// FALLBACK SPA
+// O React Router gerencia as rotas do frontend (/dashboard, /cadastro...).
+// Qualquer GET que não seja de API e não exista como arquivo estático
+// devolve o index.html, evitando "Cannot GET /rota" ao abrir/linkar.
+// ============================================================
+const PREFIXOS_API = [
+  '/auth', '/grupos', '/categorias', '/transacoes', '/orcamentos',
+  '/rateios', '/metas', '/importacoes', '/relatorios', '/exportar', '/health',
+];
+
+app.use((req, res) => {
+  const ehRotaDeApi = PREFIXOS_API.some((p) => req.path.startsWith(p));
+
+  if (ehRotaDeApi || req.method !== 'GET') {
+    res.status(404).json({ erro: 'Rota não encontrada' });
+    return;
+  }
+
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
 app.listen(PORTA, () => {
