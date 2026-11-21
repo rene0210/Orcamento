@@ -47,9 +47,11 @@ export function Rateios() {
   if (!grupo_id) {
     return (
       <div className="card">
-        <h2>Divisão de Contas</h2>
+        <div className="card-header">
+          <h2>Divisão de Contas</h2>
+        </div>
         <p>Selecione um grupo para criar e gerenciar rateios.</p>
-        <div style={{ marginTop: '1rem' }}>
+        <div className="form-group" style={{ marginTop: '1rem', marginBottom: 0 }}>
           <label>Grupo</label>
           <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)} className="form-group-input">
             <option value="">Selecione</option>
@@ -71,20 +73,22 @@ export function Rateios() {
         </button>
       </div>
 
-      <div style={{ marginBottom: '1rem' }}>
-        <label>Grupo</label>
-        <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)} className="form-group-input">
-          <option value="">Selecione</option>
-          {grupos.map((g) => (
-            <option key={g.id} value={g.id}>{g.nome}</option>
-          ))}
-        </select>
+      <div className="toolbar">
+        <div className="form-group">
+          <label>Grupo</label>
+          <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)} className="form-group-input">
+            <option value="">Selecione um grupo</option>
+            {grupos.map((g) => (
+              <option key={g.id} value={g.id}>{g.nome}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-          Rateios do Grupo
-        </h2>
+        <div className="card-header">
+          <h2>Rateios do Grupo</h2>
+        </div>
         <table className="table">
           <thead>
             <tr>
@@ -135,9 +139,9 @@ export function Rateios() {
 
       {nova && (
         <div className="card" style={{ marginTop: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-            Nova Conta para Rateio
-          </h2>
+          <div className="card-header">
+            <h2>Nova Conta para Rateio</h2>
+          </div>
           <form onSubmit={criarRateio}>
             <div className="form-group">
               <label>Descrição</label>

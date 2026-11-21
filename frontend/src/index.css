@@ -10,7 +10,7 @@
   --bg: #f4f6fb;
   --surface: #ffffff;
   --surface-2: #f8fafc;
-  --border: #e6eaf2;
+  --border: #e0e6f1;
   --border-strong: #d7deea;
   --text: #0f172a;
   --text-2: #334155;
@@ -350,11 +350,70 @@ h2 {
 
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   padding: 1.5rem;
   margin-bottom: 1.5rem;
   box-shadow: var(--shadow-sm);
+}
+
+/* ------------------------------------------------------------
+   Separação de tópicos:
+   1. card-header  → faixa com borda separando título e conteúdo
+   2. toolbar      → bloco de filtros com borda própria
+   3. page-header  → borda inferior separando o título da página
+   ------------------------------------------------------------ */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: -1.5rem -1.5rem 1.25rem;
+  padding: 0.9rem 1.5rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  border-radius: 11px 11px 0 0;
+}
+
+.card-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+}
+
+.toolbar .form-group {
+  margin-bottom: 0;
+  min-width: 170px;
+}
+
+/* Dentro de um card: vira faixa colada no topo, com borda embaixo
+   (separa os filtros do conteúdo, ex.: tabela) */
+.card > .toolbar {
+  margin: -1.5rem -1.5rem 1.25rem;
+  padding: 0.9rem 1.5rem;
+  background: var(--surface-2);
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 11px 11px 0 0;
+  box-shadow: none;
 }
 
 .stats-grid {
@@ -740,6 +799,8 @@ select.form-group-input {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.6rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
 }
 

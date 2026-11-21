@@ -115,9 +115,12 @@ export function Dashboard() {
         </div>
         {erro && <div className="alert alert-error">{erro}</div>}
         <div className="card" style={{ maxWidth: '520px' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-            Criar seu primeiro grupo
-          </h2>
+          <div className="card-header">
+            <h2>
+              <Plus size={18} />
+              Criar seu primeiro grupo
+            </h2>
+          </div>
           <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>
             Um grupo é o núcleo do orçamento compartilhado: casal, família ou colegas de
             quarto. Nele ficam as transações, orçamentos, metas e rateios.
@@ -166,8 +169,8 @@ export function Dashboard() {
 
       {erro && <div className="alert alert-error">{erro}</div>}
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <div className="form-group" style={{ marginBottom: 0 }}>
+      <div className="toolbar">
+        <div className="form-group">
           <label>Grupo</label>
           <select
             value={grupoSelecionado || ''}
@@ -182,7 +185,7 @@ export function Dashboard() {
             ))}
           </select>
         </div>
-        <div className="form-group" style={{ marginBottom: 0 }}>
+        <div className="form-group">
           <label>Mês</label>
           <input
             type="month"
@@ -227,9 +230,9 @@ export function Dashboard() {
 
       {grupoSelecionado && status && status.orcamentos.length > 0 && (
         <div className="card">
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-            Status do Orçamento - {mes}
-          </h2>
+          <div className="card-header">
+            <h2>Status do Orçamento — {mes}</h2>
+          </div>
           <table className="table">
             <thead>
               <tr>
@@ -259,6 +262,9 @@ export function Dashboard() {
 
       {grupoSelecionado && status && status.orcamentos.length === 0 && (
         <div className="card">
+          <div className="card-header">
+            <h2>Orçamento Mensal</h2>
+          </div>
           <p style={{ color: '#64748b' }}>
             Nenhum orçamento definido para este mês. Crie um na página{' '}
             <strong>Orçamento</strong>.
@@ -269,10 +275,12 @@ export function Dashboard() {
       {/* Convite de membros: necessário para rateio compartilhado */}
       {grupoSelecionado && (
         <div className="card" style={{ marginTop: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-            <UserPlus size={18} style={{ verticalAlign: 'middle', marginRight: '0.4rem' }} />
-            Adicionar membro ao grupo
-          </h2>
+          <div className="card-header">
+            <h2>
+              <UserPlus size={18} />
+              Adicionar membro ao grupo
+            </h2>
+          </div>
           <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>
             O outro usuário precisa estar cadastrado. A renda mensal é usada no rateio
             proporcional.

@@ -54,9 +54,9 @@ export function Importar() {
       </div>
 
       <div className="card">
-        <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-          Importar CSV ou OFX
-        </h2>
+        <div className="card-header">
+          <h2>Importar CSV ou OFX</h2>
+        </div>
 
         <div className="form-group">
           <label>Arquivo</label>
@@ -108,9 +108,9 @@ export function Importar() {
       </div>
 
       <div className="card" style={{ marginTop: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-          Pré-visualização do Conteúdo
-        </h2>
+        <div className="card-header">
+          <h2>Pré-visualização do Conteúdo</h2>
+        </div>
         <pre style={{ fontSize: '0.75rem', background: '#f8fafc', padding: '1rem', borderRadius: '0.5rem', overflow: 'auto', maxHeight: '300px' }}>
           {conteudo.slice(0, 2000)}
         </pre>

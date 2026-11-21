@@ -43,9 +43,11 @@ export function Orcamentos() {
   if (!grupo_id) {
     return (
       <div className="card">
-        <h2>Orçamento Mensal</h2>
+        <div className="card-header">
+          <h2>Orçamento Mensal</h2>
+        </div>
         <p>Selecione um grupo para visualizar e gerenciar orçamentos.</p>
-        <div style={{ marginTop: '1rem' }}>
+        <div className="form-group" style={{ marginTop: '1rem', marginBottom: 0 }}>
           <label>Grupo</label>
           <select
             value={grupo_id}
@@ -71,8 +73,8 @@ export function Orcamentos() {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-        <div className="form-group" style={{ marginBottom: 0 }}>
+      <div className="toolbar">
+        <div className="form-group">
           <label>Grupo</label>
           <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)} className="form-group-input">
             <option value="">Selecione</option>
@@ -81,7 +83,7 @@ export function Orcamentos() {
             ))}
           </select>
         </div>
-        <div className="form-group" style={{ marginBottom: 0 }}>
+        <div className="form-group">
           <label>Mês</label>
           <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className="form-group-input" />
         </div>
@@ -89,9 +91,9 @@ export function Orcamentos() {
 
       {status && (
         <div className="card">
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-            Status - {mes}
-          </h2>
+          <div className="card-header">
+            <h2>Status do Orçamento — {mes}</h2>
+          </div>
           <table className="table">
             <thead>
               <tr>
@@ -121,9 +123,9 @@ export function Orcamentos() {
 
       {nova && (
         <div className="card" style={{ marginTop: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-            Novo Orçamento
-          </h2>
+          <div className="card-header">
+            <h2>Novo Orçamento</h2>
+          </div>
           <form onSubmit={criarOrcamento}>
             <div className="form-group">
               <label>Categoria</label>

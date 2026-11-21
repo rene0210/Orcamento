@@ -71,9 +71,11 @@ export function Relatorios() {
   if (!grupo_id) {
     return (
       <div className="card">
-        <h2>Relatórios e Gráficos</h2>
+        <div className="card-header">
+          <h2>Relatórios e Gráficos</h2>
+        </div>
         <p>Selecione um grupo para visualizar relatórios.</p>
-        <div style={{ marginTop: '1rem' }}>
+        <div className="form-group" style={{ marginTop: '1rem', marginBottom: 0 }}>
           <label>Grupo</label>
           <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)} className="form-group-input">
             <option value="">Selecione</option>
@@ -118,9 +120,9 @@ export function Relatorios() {
       <div className="charts-grid">
         {/* Gráfico de Pizza - Gastos por Categoria */}
         <div className="card">
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-            Gastos por Categoria ({mes})
-          </h2>
+          <div className="card-header">
+            <h2>Gastos por Categoria — {mes}</h2>
+          </div>
           {graficoCategoria.length === 0 ? (
             <div className="empty-state">Nenhuma despesa cadastrada neste mês.</div>
           ) : (
@@ -177,9 +179,9 @@ export function Relatorios() {
 
         {/* Gráfico de Linha - Evolução Mensal */}
         <div className="card">
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-            Evolução Mensal (Últimos 6 meses)
-          </h2>
+          <div className="card-header">
+            <h2>Evolução Mensal — últimos 6 meses</h2>
+          </div>
           {graficoEvolucao.length === 0 ? (
             <div className="empty-state">Nenhuma transação encontrada.</div>
           ) : (

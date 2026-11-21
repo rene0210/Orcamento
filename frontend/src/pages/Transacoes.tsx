@@ -71,15 +71,17 @@ export function Transacoes() {
       </div>
 
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Saldo do Período</h3>
+        <div className="card-header">
+          <h2>Saldo do Período</h2>
+        </div>
         <div className="valor" style={{ fontSize: '2rem', fontWeight: '700' }}>
           R$ {total.toFixed(2)}
         </div>
       </div>
 
       <div className="card">
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-          <div className="form-group" style={{ marginBottom: 0 }}>
+        <div className="toolbar">
+          <div className="form-group">
             <label>Grupo</label>
             <select
               value={grupo_id}
@@ -94,7 +96,7 @@ export function Transacoes() {
               ))}
             </select>
           </div>
-          <div className="form-group" style={{ marginBottom: 0 }}>
+          <div className="form-group">
             <label>Mês</label>
             <input
               type="month"
@@ -103,7 +105,7 @@ export function Transacoes() {
               className="form-group-input"
             />
           </div>
-          <div className="form-group" style={{ marginBottom: 0 }}>
+          <div className="form-group">
             <label>Tipo</label>
             <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="form-group-input">
               <option value="">Todos</option>
@@ -156,9 +158,9 @@ export function Transacoes() {
 
       {nova && (
         <div className="card" style={{ marginTop: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-            Nova Transação
-          </h2>
+          <div className="card-header">
+            <h2>Nova Transação</h2>
+          </div>
           <form onSubmit={criarTransacao} className="form-grid">
             <div className="form-group">
               <label>Grupo ID</label>
