@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
-import { Mail, Lock, User } from 'lucide-react';
+import {
+  BarChart3,
+  CheckCircle2,
+  Flag,
+  Lock,
+  Mail,
+  User,
+  Wallet,
+  ArrowLeftRight,
+} from 'lucide-react';
 
 export function Cadastro() {
   const [nome, setNome] = useState('');
@@ -22,51 +31,106 @@ export function Cadastro() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-    }}>
-      <div style={{
-        background: 'white',
-        padding: '2.5rem',
-        borderRadius: '1rem',
-        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-        width: '100%',
-        maxWidth: '400px',
-      }}>
-        <h2 style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', marginBottom: '1.5rem' }}>
-          Criar conta
-        </h2>
-        {erro && <div style={{ padding: '0.75rem', borderRadius: '0.5rem', marginBottom: '1rem', fontSize: '0.875rem', background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>{erro}</div>}
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.25rem' }}>
-              <User size={18} style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} /> Nome completo
-            </label>
-            <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} required style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', fontSize: '0.875rem' }} />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.25rem' }}>
-              <Mail size={18} style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} /> E-mail
-            </label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', fontSize: '0.875rem' }} />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.25rem' }}>
-              <Lock size={18} style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} /> Senha
-            </label>
-            <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', fontSize: '0.875rem' }} />
-          </div>
-          <button type="submit" style={{ width: '100%', padding: '0.5rem 1rem', borderRadius: '0.5rem', background: '#2563eb', color: 'white', fontWeight: '500', border: 'none', cursor: 'pointer' }}>
-            Criar conta
-          </button>
-        </form>
-        <p style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.875rem', color: '#64748b' }}>
-          Já tem conta? <Link to="/login" style={{ color: '#2563eb', fontWeight: '500' }}>Faça login</Link>
+    <div className="login-page">
+      {/* Painel de marca (lado esquerdo) */}
+      <div className="auth-brand">
+        <div className="auth-logo">
+          <span className="brand-icon">
+            <Wallet size={20} />
+          </span>
+          Orçamento
+        </div>
+
+        <div className="auth-brand-body">
+          <h1>Comece a organizar as finanças hoje.</h1>
+          <p>
+            Crie sua conta, monte o grupo do casal, família ou colegas de quarto e
+            compartilhe metas e despesas em minutos.
+          </p>
+          <ul className="auth-features">
+            <li>
+              <CheckCircle2 size={18} /> Cadastro gratuito e sem cartão
+            </li>
+            <li>
+              <ArrowLeftRight size={18} /> Divisão de contas automática e justa
+            </li>
+            <li>
+              <Flag size={18} /> Metas compartilhadas com progresso em tempo real
+            </li>
+            <li>
+              <BarChart3 size={18} /> Relatórios e gráficos exportáveis em CSV
+            </li>
+          </ul>
+        </div>
+
+        <p className="auth-demo">
+          Conta demo: <strong>ana@email.com</strong> · senha <strong>senha123</strong>
         </p>
+      </div>
+
+      {/* Formulário (lado direito) */}
+      <div className="auth-card">
+        <div className="login-card">
+          <div className="auth-mobile-logo">
+            <span className="brand-icon">
+              <Wallet size={20} />
+            </span>
+          </div>
+          <h2>Criar conta</h2>
+          <p className="auth-sub">Leva menos de um minuto.</p>
+
+          {erro && <div className="alert alert-error">{erro}</div>}
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Nome completo</label>
+              <div className="input-wrap">
+                <User size={16} />
+                <input
+                  type="text"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  placeholder="Seu nome"
+                  required
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>E-mail</label>
+              <div className="input-wrap">
+                <Mail size={16} />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="voce@email.com"
+                  required
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Senha</label>
+              <div className="input-wrap">
+                <Lock size={16} />
+                <input
+                  type="password"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  minLength={6}
+                  required
+                />
+              </div>
+            </div>
+            <button type="submit" className="btn btn-primary btn-block">
+              Criar conta
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            Já tem conta? <Link to="/login">Faça login</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

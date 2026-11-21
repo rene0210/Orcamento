@@ -159,7 +159,7 @@ export function Transacoes() {
           <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
             Nova Transação
           </h2>
-          <form onSubmit={criarTransacao} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <form onSubmit={criarTransacao} className="form-grid">
             <div className="form-group">
               <label>Grupo ID</label>
               <input

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
-import { Plus, UserPlus } from 'lucide-react';
+import { AlertTriangle, Plus, TrendingDown, TrendingUp, UserPlus, Wallet } from 'lucide-react';
 
 // Formata número em BRL (ex: 1234.5 -> "R$ 1.234,50")
 function brl(v: number): string {
@@ -156,7 +156,12 @@ export function Dashboard() {
   return (
     <div>
       <div className="page-header">
-        <h1>Dashboard</h1>
+        <div>
+          <h1>Dashboard</h1>
+          <p className="page-subtitle">
+            Visão geral de receitas, despesas e alertas do mês.
+          </p>
+        </div>
       </div>
 
       {erro && <div className="alert alert-error">{erro}</div>}
@@ -191,18 +196,30 @@ export function Dashboard() {
       {/* Totais reais do mês */}
       <div className="stats-grid">
         <div className="stat-card">
+          <span className="stat-icon icon-green">
+            <TrendingUp size={20} />
+          </span>
           <h3>Total Receitas</h3>
           <div className="valor text-success">{brl(receitas)}</div>
         </div>
         <div className="stat-card">
+          <span className="stat-icon icon-red">
+            <TrendingDown size={20} />
+          </span>
           <h3>Total Despesas</h3>
           <div className="valor text-danger">{brl(despesas)}</div>
         </div>
         <div className="stat-card">
+          <span className="stat-icon icon-blue">
+            <Wallet size={20} />
+          </span>
           <h3>Saldo</h3>
           <div className={`valor ${saldo < 0 ? 'text-danger' : ''}`}>{brl(saldo)}</div>
         </div>
         <div className="stat-card">
+          <span className="stat-icon icon-amber">
+            <AlertTriangle size={20} />
+          </span>
           <h3>Categorias em Alerta</h3>
           <div className="valor text-warning">{alertas}</div>
         </div>

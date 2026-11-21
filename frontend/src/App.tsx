@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Navbar } from './components/Navbar';
+import { AppLayout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { ReactNode } from 'react';
 import { Login } from './pages/Login';
 import { Cadastro } from './pages/Cadastro';
 import { Dashboard } from './pages/Dashboard';
@@ -15,12 +14,14 @@ import { Relatorios } from './pages/Relatorios';
 export default function App() {
   return (
     <BrowserRouter>
-      <Navbar />
-      <div className="container">
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/cadastro" element={<Cadastro />} />
-          {/* "/" redireciona para /dashboard (rota usada pelo Login e Navbar) */}
+      <Routes>
+        {/* Autenticação: telas cheias, sem sidebar */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/cadastro" element={<Cadastro />} />
+
+        {/* Área logada: envolvida pelo shell com sidebar (AppLayout) */}
+        <Route element={<AppLayout />}>
+          {/* "/" redireciona para /dashboard (rota usada pelo Login) */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route
             path="/dashboard"
@@ -78,8 +79,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-        </Routes>
-      </div>
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 }

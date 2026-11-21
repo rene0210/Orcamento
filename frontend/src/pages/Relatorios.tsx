@@ -115,7 +115,7 @@ export function Relatorios() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+      <div className="charts-grid">
         {/* Gráfico de Pizza - Gastos por Categoria */}
         <div className="card">
           <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
