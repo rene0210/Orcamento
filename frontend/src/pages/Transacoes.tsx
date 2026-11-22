@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { Plus } from 'lucide-react';
 
@@ -6,7 +7,9 @@ export function Transacoes() {
   const [transacoes, setTransacoes] = useState<any[]>([]);
   const [grupo_id, setGrupoId] = useState('');
   const [mes, setMes] = useState('');
-  const [tipo, setTipo] = useState('');
+  // Filtro de tipo inicializado pela URL (ex.: vindo do Dashboard: /transacoes?tipo=receita)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [tipo, setTipo] = useState(searchParams.get('tipo') || '');
   const [nova, setNova] = useState(false);
   const [form, setForm] = useState({
     grupo_id: '',
@@ -107,7 +110,18 @@ export function Transacoes() {
           </div>
           <div className="form-group">
             <label>Tipo</label>
-            <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="form-group-input">
+            <select
+              value={tipo}
+              onChange={(e) => {
+                setTipo(e.target.value);
+                // Mantém a URL em sincronia com o filtro (compartilhável/revisitable)
+                const params = new URLSearchParams(searchParams);
+                if (e.target.value) params.set('tipo', e.target.value);
+                else params.delete('tipo');
+                setSearchParams(params, { replace: true });
+              }}
+              className="form-group-input"
+            >
               <option value="">Todos</option>
               <option value="receita">Receita</option>
               <option value="despesa">Despesa</option>

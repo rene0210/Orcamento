@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { Plus } from 'lucide-react';
 
@@ -7,6 +8,9 @@ export function Orcamentos() {
   const [grupo_id, setGrupoId] = useState('');
   const [mes, setMes] = useState(new Date().toISOString().slice(0, 7));
   const [status, setStatus] = useState<any>(null);
+  // Filtro vindo do Dashboard: /orcamentos?filtro=alerta (mostra só categorias em alerta)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const somenteAlerta = searchParams.get('filtro') === 'alerta';
   const [categorias, setCategorias] = useState<any[]>([]);
   const [nova, setNova] = useState(false);
   const [form, setForm] = useState({
@@ -89,35 +93,65 @@ export function Orcamentos() {
         </div>
       </div>
 
+      {somenteAlerta && (
+        <div className="filter-note">
+          <span>
+            Exibindo apenas <strong>categorias em alerta</strong> (estourou ou se aproxima do limite).
+          </span>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => setSearchParams({}, { replace: true })}
+          >
+            Ver todas
+          </button>
+        </div>
+      )}
+
       {status && (
         <div className="card">
           <div className="card-header">
-            <h2>Status do Orçamento — {mes}</h2>
+            <h2>
+              {somenteAlerta ? 'Categorias em Alerta' : 'Status do Orçamento'} — {mes}
+            </h2>
           </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Categoria</th>
-                <th>Limite</th>
-                <th>Gasto</th>
-                <th>Consumo</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {status.orcamentos.map((o: any) => (
-                <tr key={o.categoria_id}>
-                  <td>{o.categoria}</td>
-                  <td>R$ {Number(o.limite).toFixed(2)}</td>
-                  <td>R$ {Number(o.gasto).toFixed(2)}</td>
-                  <td>{o.percentual_consumido}%</td>
-                  <td>
-                    <span className={`badge badge-${o.status}`}>{o.status}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {(() => {
+            const lista = somenteAlerta
+              ? status.orcamentos.filter((o: any) => o.status !== 'ok')
+              : status.orcamentos;
+            if (lista.length === 0) {
+              return (
+                <div className="empty-state">
+                  Nenhuma categoria em alerta neste mês. 🎉 Todos os limites estão sob controle.
+                </div>
+              );
+            }
+            return (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Categoria</th>
+                    <th>Limite</th>
+                    <th>Gasto</th>
+                    <th>Consumo</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lista.map((o: any) => (
+                    <tr key={o.categoria_id}>
+                      <td>{o.categoria}</td>
+                      <td>R$ {Number(o.limite).toFixed(2)}</td>
+                      <td>R$ {Number(o.gasto).toFixed(2)}</td>
+                      <td>{o.percentual_consumido}%</td>
+                      <td>
+                        <span className={`badge badge-${o.status}`}>{o.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            );
+          })()}
         </div>
       )}
 
