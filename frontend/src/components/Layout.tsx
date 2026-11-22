@@ -55,12 +55,13 @@ export function AppLayout() {
   return (
     <div className={`app-shell${menuAberto ? ' sidebar-open' : ''}`}>
       <aside className="sidebar">
-        <div className="sidebar-brand">
+        {/* Marca clicável: volta ao Dashboard de qualquer tela */}
+        <NavLink to="/dashboard" className="sidebar-brand" title="Ir para o Dashboard">
           <span className="brand-icon">
             <Wallet size={20} />
           </span>
           Orçamento
-        </div>
+        </NavLink>
 
         <nav className="sidebar-nav">
           <div className="nav-label">Menu principal</div>
@@ -107,9 +108,9 @@ export function AppLayout() {
           >
             <Menu size={20} />
           </button>
-          <span className="mobile-brand">
+          <NavLink to="/dashboard" className="mobile-brand" title="Ir para o Dashboard">
             <Wallet size={18} /> Orçamento
-          </span>
+          </NavLink>
           <span style={{ width: 38 }} />
         </div>
 
