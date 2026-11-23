@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import PDFDocument from 'pdfkit';
+import { gerarInsights } from './analise.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1231,6 +1232,31 @@ app.get('/exportar/csv', autenticarToken, (_req, res) => {
 });
 
 // ============================================================
+// ANÁLISE INTELIGENTE (IA local de sugestões)
+// GET /analise/insights?grupo_id=1&mes=2026-11
+// Roda o motor de regras (src/analise.ts) sobre os dados do grupo
+// e devolve recomendações de melhoria por tópico de tela.
+// ============================================================
+app.get('/analise/insights', autenticarToken, (req, res) => {
+  try {
+    const { grupo_id, mes } = req.query as Record<string, string>;
+
+    if (!grupo_id || !mes) {
+      res.status(400).json({ erro: 'grupo_id e mes são obrigatórios' });
+      return;
+    }
+
+    res.json({
+      grupo_id,
+      mes,
+      insights: gerarInsights(grupo_id, mes),
+    });
+  } catch (erro) {
+    res.status(500).json({ erro: 'Falha ao gerar análises' });
+  }
+});
+
+// ============================================================
 // FALLBACK SPA
 // O React Router gerencia as rotas do frontend (/dashboard, /cadastro...).
 // Qualquer GET que não seja de API e não exista como arquivo estático
@@ -1238,7 +1264,8 @@ app.get('/exportar/csv', autenticarToken, (_req, res) => {
 // ============================================================
 const PREFIXOS_API = [
   '/auth', '/grupos', '/categorias', '/transacoes', '/orcamentos',
-  '/rateios', '/metas', '/importacoes', '/relatorios', '/exportar', '/health',
+  '/rateios', '/metas', '/importacoes', '/relatorios', '/exportar',
+  '/analise', '/health',
 ];
 
 app.use((req, res) => {

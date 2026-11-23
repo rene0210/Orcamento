@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AiProvider } from './ai/AiContext';
 import { AppLayout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/Login';
@@ -13,7 +14,9 @@ import { Relatorios } from './pages/Relatorios';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    // AiProvider: estado global de ligar/desligar a IA de sugestões
+    <AiProvider>
+      <BrowserRouter>
       <Routes>
         {/* Autenticação: telas cheias, sem sidebar */}
         <Route path="/login" element={<Login />} />
@@ -81,6 +84,7 @@ export default function App() {
           />
         </Route>
       </Routes>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AiProvider>
   );
 }

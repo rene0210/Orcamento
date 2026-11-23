@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useAi } from '../ai/AiContext';
 import {
   BarChart3,
   Flag,
@@ -7,6 +8,7 @@ import {
   LogOut,
   Menu,
   PieChart,
+  Sparkles,
   Upload,
   Users,
   Wallet,
@@ -41,6 +43,7 @@ export function AppLayout() {
   const [menuAberto, setMenuAberto] = useState(false);
   const location = useLocation();
   const email = emailDoToken();
+  const { ativa: iaAtiva, alternar: alternarIa } = useAi();
 
   // Fecha o menu mobile ao trocar de página
   useEffect(() => {
@@ -76,6 +79,23 @@ export function AppLayout() {
             </NavLink>
           ))}
         </nav>
+
+        {/* Toggle da IA: liga/desliga as sugestões em todas as telas */}
+        <button
+          className={`ai-toggle${iaAtiva ? ' on' : ''}`}
+          onClick={alternarIa}
+          title={
+            iaAtiva
+              ? 'Clique para desabilitar as sugestões da IA'
+              : 'Clique para habilitar as sugestões da IA'
+          }
+        >
+          <Sparkles size={16} />
+          <span>Sugestões da IA</span>
+          <span className="ai-switch">
+            <span className="ai-knob" />
+          </span>
+        </button>
 
         <div className="sidebar-footer">
           {email && (

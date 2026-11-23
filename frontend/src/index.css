@@ -849,6 +849,203 @@ select.form-group-input {
 }
 
 /* ============================================================
+   IA DE SUGESTÕES — painel por tópico + toggle da sidebar
+   ============================================================ */
+
+.insight-card {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.insight-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.5rem;
+  background: linear-gradient(90deg, #f5f3ff 0%, #eff6ff 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.insight-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #4338ca;
+}
+
+.insight-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  background: #4338ca;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.insight-body {
+  padding: 1rem 1.5rem 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* Item de sugestão: borda lateral colorida pela severidade */
+.insight-item {
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid;
+  border-radius: 0 10px 10px 0;
+}
+
+.insight-item.sev-critico { border-left-color: #ef4444; background: #fef2f2; }
+.insight-item.sev-atencao { border-left-color: #f59e0b; background: #fffbeb; }
+.insight-item.sev-dica    { border-left-color: #3b82f6; background: #eff6ff; }
+.insight-item.sev-ok      { border-left-color: #22c55e; background: #f0fdf4; }
+
+.insight-item-top {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.insight-item-top strong {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.sev-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.sev-critico .sev-icon { background: #fee2e2; color: #dc2626; }
+.sev-atencao .sev-icon { background: #fef3c7; color: #d97706; }
+.sev-dica .sev-icon    { background: #dbeafe; color: #2563eb; }
+.sev-ok .sev-icon      { background: #dcfce7; color: #16a34a; }
+
+.sev-tag {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+}
+
+.tag-critico { background: #fee2e2; color: #b91c1c; }
+.tag-atencao { background: #fef3c7; color: #b45309; }
+.tag-dica    { background: #dbeafe; color: #1d4ed8; }
+.tag-ok      { background: #dcfce7; color: #15803d; }
+
+.insight-metric {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.insight-text {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-2);
+  margin-top: 0.35rem;
+}
+
+.insight-text b {
+  color: var(--text);
+}
+
+.insight-route {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.insight-route svg {
+  transition: transform 0.15s ease;
+}
+
+.insight-route:hover svg {
+  transform: translateX(3px);
+}
+
+/* Toggle ligar/desligar IA (sidebar escura) */
+.ai-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: calc(100% - 2rem);
+  margin: 0.5rem 1rem 0;
+  padding: 0.6rem 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ai-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.ai-toggle.on {
+  background: rgba(99, 102, 241, 0.28);
+  border-color: rgba(165, 180, 252, 0.55);
+  color: #e0e7ff;
+}
+
+.ai-switch {
+  margin-left: auto;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: #475569;
+  position: relative;
+  transition: background 0.18s ease;
+  flex-shrink: 0;
+}
+
+.ai-toggle.on .ai-switch {
+  background: #818cf8;
+}
+
+.ai-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.18s ease;
+}
+
+.ai-toggle.on .ai-knob {
+  transform: translateX(14px);
+}
+
+/* ============================================================
    CABEÇALHO DE PÁGINA
    ============================================================ */
 

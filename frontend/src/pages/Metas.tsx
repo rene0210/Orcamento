@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import { InsightPanel } from '../ai/InsightPanel';
 
+// Metas não têm filtro de mês: a IA analisa o mês corrente
+const MES_ATUAL = new Date().toISOString().slice(0, 7);
 
 export function Metas() {
   const [grupos, setGrupos] = useState<any[]>([]);
@@ -132,6 +135,9 @@ export function Metas() {
           </tbody>
         </table>
       </div>
+
+      {/* IA: ritmo necessário por meta e destino do saldo excedente */}
+      <InsightPanel topico="metas" grupo_id={grupo_id} mes={MES_ATUAL} />
 
       {nova && (
         <div className="card" style={{ marginTop: '1.5rem' }}>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { Plus } from 'lucide-react';
+import { InsightPanel } from '../ai/InsightPanel';
 
 export function Transacoes() {
   const [transacoes, setTransacoes] = useState<any[]>([]);
@@ -169,6 +170,13 @@ export function Transacoes() {
           </tbody>
         </table>
       </div>
+
+      {/* IA: gastos recorrentes, maior despesa e volume de lançamentos (mês corrente quando sem filtro) */}
+      <InsightPanel
+        topico="transacoes"
+        grupo_id={grupo_id || grupos[0]?.id || ''}
+        mes={mes || new Date().toISOString().slice(0, 7)}
+      />
 
       {nova && (
         <div className="card" style={{ marginTop: '1.5rem' }}>

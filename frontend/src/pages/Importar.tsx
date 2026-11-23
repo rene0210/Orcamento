@@ -1,14 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../api';
+import { InsightPanel } from '../ai/InsightPanel';
 
+// Importar não tem filtro de mês: a IA analisa o mês corrente
+const MES_ATUAL = new Date().toISOString().slice(0, 7);
 
 export function Importar() {
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [conteudo, setConteudo] = useState('');
   const [formato, setFormato] = useState<'csv' | 'ofx'>('csv');
   const [grupo_id, setGrupoId] = useState('');
+  const [grupos, setGrupos] = useState<any[]>([]);
   const [resultado, setResultado] = useState<any>(null);
   const [erro, setErro] = useState('');
+
+  // Grupos servem para a IA analisar (mesmo antes do usuário digitar o ID)
+  useEffect(() => {
+    api.listarGrupos().then(setGrupos).catch(() => setGrupos([]));
+  }, []);
 
   async function handleArquivo(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -115,6 +124,13 @@ export function Importar() {
           {conteudo.slice(0, 2000)}
         </pre>
       </div>
+
+      {/* IA: qualidade dos dados e rotina de importação */}
+      <InsightPanel
+        topico="importar"
+        grupo_id={grupo_id || grupos[0]?.id || ''}
+        mes={MES_ATUAL}
+      />
     </div>
   );
 }

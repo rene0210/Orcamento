@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { AlertTriangle, ArrowRight, Plus, TrendingDown, TrendingUp, UserPlus, Wallet } from 'lucide-react';
+import { InsightPanel } from '../ai/InsightPanel';
 
 // Formata número em BRL (ex: 1234.5 -> "R$ 1.234,50")
 function brl(v: number): string {
@@ -240,6 +241,9 @@ export function Dashboard() {
           </span>
         </Link>
       </div>
+
+      {/* IA: como melhorar receitas, despesas, saldo e alertas deste mês */}
+      <InsightPanel topico="dashboard" grupo_id={grupoSelecionado} mes={mes} />
 
       {grupoSelecionado && status && status.orcamentos.length > 0 && (
         <div className="card">

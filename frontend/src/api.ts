@@ -147,4 +147,8 @@ export const api = {
     request(`/relatorios/gastos-categoria?grupo_id=${grupo_id}&mes=${mes}`),
   relatoriosEvolucaoMensal: (grupo_id: string) =>
     request(`/relatorios/evolucao-mensal?grupo_id=${grupo_id}`),
+
+  // Análise inteligente (IA local de sugestões)
+  analiseInsights: (grupo_id: string, mes: string) =>
+    request(`/analise/insights?grupo_id=${grupo_id}&mes=${mes}`),
 };

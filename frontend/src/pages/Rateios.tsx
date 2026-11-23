@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { Plus } from 'lucide-react';
+import { InsightPanel } from '../ai/InsightPanel';
+
+// Rateios não têm filtro de mês: a IA analisa o mês corrente
+const MES_ATUAL = new Date().toISOString().slice(0, 7);
 
 export function Rateios() {
   const [grupos, setGrupos] = useState<any[]>([]);
@@ -136,6 +140,9 @@ export function Rateios() {
           </tbody>
         </table>
       </div>
+
+      {/* IA: contas pendentes, vencidas e sugestão da melhor regra de divisão */}
+      <InsightPanel topico="rateios" grupo_id={grupo_id} mes={MES_ATUAL} />
 
       {nova && (
         <div className="card" style={{ marginTop: '1.5rem' }}>

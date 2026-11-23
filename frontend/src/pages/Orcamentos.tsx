@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { Plus } from 'lucide-react';
+import { InsightPanel } from '../ai/InsightPanel';
 
 export function Orcamentos() {
   const [grupos, setGrupos] = useState<any[]>([]);
@@ -154,6 +155,9 @@ export function Orcamentos() {
           })()}
         </div>
       )}
+
+      {/* IA: limites estourados, alertas, orçamento diário e sugestão de limites */}
+      <InsightPanel topico="orcamentos" grupo_id={grupo_id} mes={mes} />
 
       {nova && (
         <div className="card" style={{ marginTop: '1.5rem' }}>

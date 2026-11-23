@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, baseURL } from '../api';
+import { InsightPanel } from '../ai/InsightPanel';
 import {
   PieChart,
   Pie,
@@ -242,6 +243,9 @@ export function Relatorios() {
           )}
         </div>
       </div>
+
+      {/* IA: indicadores do relatório (economia, concentração, tendência, metas) e como melhorá-los */}
+      <InsightPanel topico="relatorios" grupo_id={grupo_id} mes={mes} />
     </div>
   );
 }
