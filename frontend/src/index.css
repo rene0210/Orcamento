@@ -417,6 +417,94 @@ h2 {
   min-width: 170px;
 }
 
+/* ------------------------------------------------------------
+   Campo de filtro moderno (grupo / mês / tipo)
+   Caixa arredondada com ícone, label em caixa alta e foco azul
+   ------------------------------------------------------------ */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  min-width: 185px;
+}
+
+.campo-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.campo-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 0 0.7rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.campo-box:hover {
+  border-color: #b9c7e0;
+}
+
+.campo-box:focus-within {
+  background: var(--surface);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.15);
+}
+
+.campo-icone {
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.campo-box:focus-within .campo-icone {
+  color: var(--primary);
+}
+
+/* Select/input "embutidos" na caixa: sem borda própria */
+.campo-box select,
+.campo-box input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.62rem 0.35rem;
+  cursor: pointer;
+}
+
+.campo-box input[type='month'] {
+  min-width: 130px;
+}
+
+.campo-box select option {
+  background: #fff;
+  color: var(--text);
+  font-weight: 400;
+}
+
+/* Chevron do select à direita */
+.campo-box select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.1rem center;
+  background-size: 15px;
+  padding-right: 1.35rem;
+}
+
 /* Dentro de um card: vira faixa colada no topo, com borda embaixo
    (separa os filtros do conteúdo, ex.: tabela) */
 .card > .toolbar {
@@ -1374,4 +1462,417 @@ select.form-group-input {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ============================================================
+   ACESSIBILIDADE — botão na sidebar, modal e adaptações
+   ============================================================ */
+
+.a11y-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: calc(100% - 2rem);
+  margin: 0.55rem 1rem 0;
+  padding: 0.6rem 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.a11y-entry:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.a11y-entry.on {
+  background: rgba(16, 185, 129, 0.24);
+  border-color: rgba(110, 231, 183, 0.55);
+  color: #d1fae5;
+}
+
+.a11y-count {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #34d399;
+  color: #064e3b;
+  font-size: 0.7rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+/* ---- Modal ---- */
+.a11y-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.a11y-dialog {
+  width: min(660px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px -12px rgb(15 23 42 / 0.45);
+  outline: none;
+}
+
+.a11y-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.4rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+}
+
+.a11y-dialog-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.a11y-dialog-body {
+  padding: 1.25rem 1.4rem;
+  display: grid;
+  gap: 1rem;
+}
+
+/* Chave mestra */
+.a11y-master {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.a11y-master:hover {
+  border-color: #b9c7e0;
+}
+
+.a11y-master.on {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+}
+
+.a11y-master-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.a11y-master-info strong {
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.a11y-master-info span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.a11y-master .ai-switch {
+  margin-left: auto;
+}
+
+.a11y-master.on .ai-switch {
+  background: #10b981;
+}
+
+/* Grade de tipos (sinalizados pelo usuário) */
+.a11y-tipos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+  gap: 0.65rem;
+}
+
+.a11y-tipos.desabilitado {
+  opacity: 0.5;
+}
+
+.a11y-tipo {
+  text-align: left;
+  padding: 0.85rem 0.95rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  cursor: pointer;
+  display: grid;
+  gap: 0.5rem;
+  transition: border-color 0.15s ease, background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.a11y-tipo:hover:not(:disabled) {
+  border-color: #a5b4fc;
+  background: #f8faff;
+}
+
+.a11y-tipo:disabled {
+  cursor: not-allowed;
+}
+
+.a11y-tipo.marcado {
+  border-color: #4f46e5;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgb(79 70 229 / 0.22);
+}
+
+.a11y-tipo-topo {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.a11y-tipo-icone {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: #eef2ff;
+  color: #4f46e5;
+  flex-shrink: 0;
+}
+
+.a11y-tipo.marcado .a11y-tipo-icone {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.a11y-tipo-topo strong {
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.a11y-check {
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+
+.a11y-tipo-desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.a11y-aviso {
+  font-size: 0.8rem;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
+}
+
+.a11y-dialog-foot {
+  padding: 1rem 1.4rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ============================================================
+   ADAPTAÇÕES APLICADAS PELO MODO ACESSIBILIDADE
+   (classes colocadas no <html> pelo A11yProvider)
+   ============================================================ */
+
+/* Foco de teclado sempre visível quando o modo está ativo */
+html.a11y-ativo :focus-visible {
+  outline: 3px solid #1d4ed8 !important;
+  outline-offset: 2px;
+}
+
+/* --- Baixa visão / cegueira: alto contraste + texto ampliado --- */
+html.a11y-visao {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #ffffff;
+  --text: #000000;
+  --text-2: #111111;
+  --muted: #1f1f1f;
+  --border: #000000;
+  --border-strong: #000000;
+  --primary: #0000b3;
+}
+
+html.a11y-visao body {
+  font-size: 18px;
+}
+
+html.a11y-visao .card,
+html.a11y-visao .stat-card,
+html.a11y-visao .insight-card,
+html.a11y-visao .toolbar,
+html.a11y-visao .campo-box {
+  border-width: 2px;
+  box-shadow: none;
+}
+
+html.a11y-visao .page-header {
+  border-bottom-width: 2px;
+}
+
+/* --- Só texto grande --- */
+html.a11y-texto body {
+  font-size: 18px;
+}
+
+/* --- Daltonismo: paleta segura Okabe-Ito + ícones nos status --- */
+html.a11y-daltonismo {
+  --primary: #0072b2;
+}
+
+html.a11y-daltonismo .text-success,
+html.a11y-daltonismo .badge-ok,
+html.a11y-daltonismo .badge-pago {
+  color: #00776b !important;
+}
+
+html.a11y-daltonismo .badge-ok,
+html.a11y-daltonismo .badge-pago {
+  background-color: #d8f3ef !important;
+  border-color: #99ded4 !important;
+}
+
+html.a11y-daltonismo .text-danger,
+html.a11y-daltonismo .badge-estourou {
+  color: #a13a00 !important;
+}
+
+html.a11y-daltonismo .badge-estourou {
+  background-color: #fdeee4 !important;
+  border-color: #f6cbb2 !important;
+}
+
+html.a11y-daltonismo .text-warning,
+html.a11y-daltonismo .badge-alerta {
+  color: #8a5200 !important;
+}
+
+html.a11y-daltonismo .badge-alerta {
+  background-color: #fdf0d8 !important;
+  border-color: #f3d9a4 !important;
+}
+
+html.a11y-daltonismo .icon-green {
+  background: #d8f3ef;
+  color: #00776b;
+}
+
+html.a11y-daltonismo .icon-red {
+  background: #fdeee4;
+  color: #d55e00;
+}
+
+html.a11y-daltonismo .icon-amber {
+  background: #fdf0d8;
+  color: #b06c00;
+}
+
+/* Ícones junto ao texto dos status (não depender só de cor) */
+html.a11y-daltonismo .badge-ok::before { content: "✓ "; }
+html.a11y-daltonismo .badge-pago::before { content: "✓ "; }
+html.a11y-daltonismo .badge-alerta::before { content: "⚠ "; }
+html.a11y-daltonismo .badge-estourou::before { content: "✕ "; }
+html.a11y-daltonismo .badge-pendente::before { content: "… "; }
+
+/* Severidades dos insights da IA */
+html.a11y-daltonismo .insight-item.sev-critico { border-left-color: #d55e00; }
+html.a11y-daltonismo .insight-item.sev-atencao { border-left-color: #e69f00; }
+html.a11y-daltonismo .insight-item.sev-ok { border-left-color: #009e73; }
+html.a11y-daltonismo .tag-critico { background: #fdeee4; color: #a13a00; }
+html.a11y-daltonismo .tag-atencao { background: #fdf0d8; color: #8a5200; }
+html.a11y-daltonismo .tag-ok { background: #d8f3ef; color: #00776b; }
+
+/* --- Surdez: alertas visuais reforçados (nenhuma informação em som) --- */
+html.a11y-surdez .alert {
+  border-width: 2px;
+  border-left-width: 6px;
+  font-weight: 600;
+}
+
+html.a11y-surdez .alert::before {
+  content: "▲ ";
+}
+
+html.a11y-surdez .badge-alerta,
+html.a11y-surdez .badge-estourou {
+  border-width: 2px;
+  font-weight: 700;
+}
+
+/* --- Autismo / sensibilidade sensorial: menos estímulos --- */
+html.a11y-autismo *,
+html.a11y-autismo *::before,
+html.a11y-autismo *::after {
+  animation-duration: 0.001s !important;
+  animation-iteration-count: 1 !important;
+  transition: none !important;
+}
+
+html.a11y-autismo .stat-card:hover,
+html.a11y-autismo .btn:hover,
+html.a11y-autismo a:hover {
+  transform: none !important;
+}
+
+html.a11y-autismo .btn-primary,
+html.a11y-autismo .btn-primary:hover {
+  background: #2563eb !important;
+  box-shadow: none !important;
+}
+
+html.a11y-autismo .brand-icon,
+html.a11y-autismo .stat-icon {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+}
+
+html.a11y-autismo .insight-head {
+  background: #eef2ff !important;
+}
+
+html.a11y-autismo body {
+  line-height: 1.75;
+}
+
+html.a11y-autismo .card,
+html.a11y-autismo .stat-card,
+html.a11y-autismo .insight-card {
+  box-shadow: none !important;
 }

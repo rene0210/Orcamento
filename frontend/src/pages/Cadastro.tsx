@@ -79,7 +79,7 @@ export function Cadastro() {
           <h2>Criar conta</h2>
           <p className="auth-sub">Leva menos de um minuto.</p>
 
-          {erro && <div className="alert alert-error">{erro}</div>}
+          {erro && <div className="alert alert-error" role="alert">{erro}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">

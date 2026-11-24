@@ -101,13 +101,13 @@ export function Importar() {
         </button>
 
         {erro && (
-          <div className="alert alert-error" style={{ marginTop: '1rem' }}>
+          <div className="alert alert-error" role="alert" style={{ marginTop: '1rem' }}>
             {erro}
           </div>
         )}
 
         {resultado && (
-          <div className="alert alert-success" style={{ marginTop: '1rem' }}>
+          <div className="alert alert-success" role="status" style={{ marginTop: '1rem' }}>
             <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Importação Concluída</h3>
             <p><strong>Arquivo:</strong> {resultado.importacao_id}</p>
             <p><strong>Linhas processadas:</strong> {resultado.total_linhas}</p>

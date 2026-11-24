@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AiProvider } from './ai/AiContext';
+import { A11yProvider } from './a11y/A11yContext';
+import { A11yPanel } from './a11y/A11yPanel';
 import { AppLayout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/Login';
@@ -14,9 +16,11 @@ import { Relatorios } from './pages/Relatorios';
 
 export default function App() {
   return (
+    // A11yProvider: modo acessibilidade global (classes no <html>)
     // AiProvider: estado global de ligar/desligar a IA de sugestões
-    <AiProvider>
-      <BrowserRouter>
+    <A11yProvider>
+      <AiProvider>
+        <BrowserRouter>
       <Routes>
         {/* Autenticação: telas cheias, sem sidebar */}
         <Route path="/login" element={<Login />} />
@@ -84,7 +88,10 @@ export default function App() {
           />
         </Route>
       </Routes>
-      </BrowserRouter>
-    </AiProvider>
+        </BrowserRouter>
+        {/* Modal de acessibilidade (disponível em qualquer tela) */}
+        <A11yPanel />
+      </AiProvider>
+    </A11yProvider>
   );
 }

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
-import { Plus } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import { InsightPanel } from '../ai/InsightPanel';
+import { Campo } from '../components/Campo';
 
 // Rateios não têm filtro de mês: a IA analisa o mês corrente
 const MES_ATUAL = new Date().toISOString().slice(0, 7);
@@ -78,15 +79,14 @@ export function Rateios() {
       </div>
 
       <div className="toolbar">
-        <div className="form-group">
-          <label>Grupo</label>
-          <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)} className="form-group-input">
+        <Campo icon={Users} label="Grupo">
+          <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)}>
             <option value="">Selecione um grupo</option>
             {grupos.map((g) => (
               <option key={g.id} value={g.id}>{g.nome}</option>
             ))}
           </select>
-        </div>
+        </Campo>
       </div>
 
       <div className="card">

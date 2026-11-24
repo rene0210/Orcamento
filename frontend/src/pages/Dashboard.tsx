@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import { AlertTriangle, ArrowRight, Plus, TrendingDown, TrendingUp, UserPlus, Wallet } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CalendarDays, Plus, TrendingDown, TrendingUp, UserPlus, Users, Wallet } from 'lucide-react';
 import { InsightPanel } from '../ai/InsightPanel';
+import { Campo } from '../components/Campo';
 
 // Formata número em BRL (ex: 1234.5 -> "R$ 1.234,50")
 function brl(v: number): string {
@@ -115,7 +116,7 @@ export function Dashboard() {
         <div className="page-header">
           <h1>Bem-vindo!</h1>
         </div>
-        {erro && <div className="alert alert-error">{erro}</div>}
+        {erro && <div className="alert alert-error" role="alert">{erro}</div>}
         <div className="card" style={{ maxWidth: '520px' }}>
           <div className="card-header">
             <h2>
@@ -169,15 +170,13 @@ export function Dashboard() {
         </div>
       </div>
 
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {erro && <div className="alert alert-error" role="alert">{erro}</div>}
 
       <div className="toolbar">
-        <div className="form-group">
-          <label>Grupo</label>
+        <Campo icon={Users} label="Grupo">
           <select
             value={grupoSelecionado || ''}
             onChange={(e) => setGrupoSelecionado(e.target.value || null)}
-            className="form-group-input"
           >
             <option value="">Selecione um grupo</option>
             {grupos.map((g) => (
@@ -186,16 +185,14 @@ export function Dashboard() {
               </option>
             ))}
           </select>
-        </div>
-        <div className="form-group">
-          <label>Mês</label>
+        </Campo>
+        <Campo icon={CalendarDays} label="Mês">
           <input
             type="month"
             value={mes}
             onChange={(e) => setMes(e.target.value)}
-            className="form-group-input"
           />
-        </div>
+        </Campo>
       </div>
 
       {/* Totais reais do mês — cada cartão leva à tela do respectivo tópico */}
@@ -302,7 +299,7 @@ export function Dashboard() {
             O outro usuário precisa estar cadastrado. A renda mensal é usada no rateio
             proporcional.
           </p>
-          {msgMembro && <div className="alert alert-success">{msgMembro}</div>}
+          {msgMembro && <div className="alert alert-success" role="status">{msgMembro}</div>}
           <form onSubmit={adicionarMembro} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label>E-mail do membro</label>

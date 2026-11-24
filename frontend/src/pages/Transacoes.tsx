@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
-import { Plus } from 'lucide-react';
+import { CalendarDays, ListFilter, Plus, Users } from 'lucide-react';
 import { InsightPanel } from '../ai/InsightPanel';
+import { Campo } from '../components/Campo';
 
 export function Transacoes() {
   const [transacoes, setTransacoes] = useState<any[]>([]);
@@ -85,13 +86,8 @@ export function Transacoes() {
 
       <div className="card">
         <div className="toolbar">
-          <div className="form-group">
-            <label>Grupo</label>
-            <select
-              value={grupo_id}
-              onChange={(e) => setGrupoId(e.target.value)}
-              className="form-group-input"
-            >
+          <Campo icon={Users} label="Grupo">
+            <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)}>
               <option value="">Todos os grupos</option>
               {grupos.map((g) => (
                 <option key={g.id} value={g.id}>
@@ -99,18 +95,11 @@ export function Transacoes() {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="form-group">
-            <label>Mês</label>
-            <input
-              type="month"
-              value={mes}
-              onChange={(e) => setMes(e.target.value)}
-              className="form-group-input"
-            />
-          </div>
-          <div className="form-group">
-            <label>Tipo</label>
+          </Campo>
+          <Campo icon={CalendarDays} label="Mês">
+            <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
+          </Campo>
+          <Campo icon={ListFilter} label="Tipo">
             <select
               value={tipo}
               onChange={(e) => {
@@ -121,13 +110,12 @@ export function Transacoes() {
                 else params.delete('tipo');
                 setSearchParams(params, { replace: true });
               }}
-              className="form-group-input"
             >
               <option value="">Todos</option>
               <option value="receita">Receita</option>
               <option value="despesa">Despesa</option>
             </select>
-          </div>
+          </Campo>
         </div>
 
         <table className="table">

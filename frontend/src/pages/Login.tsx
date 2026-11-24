@@ -78,7 +78,7 @@ export function Login() {
           <h2>Bem-vindo de volta</h2>
           <p className="auth-sub">Entre para acompanhar seu orçamento.</p>
 
-          {erro && <div className="alert alert-error">{erro}</div>}
+          {erro && <div className="alert alert-error" role="alert">{erro}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">

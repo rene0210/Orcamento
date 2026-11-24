@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api, baseURL } from '../api';
 import { InsightPanel } from '../ai/InsightPanel';
+import { useA11y } from '../a11y/A11yContext';
+import { Campo } from '../components/Campo';
+import { CalendarDays, Users } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -14,9 +17,23 @@ import {
   YAxis,
 } from 'recharts';
 
-const COLORS = ['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#a855f7', '#ec4899', '#6366f1', '#14b8a6'];
+// Paleta padrão dos gráficos
+const COLORS_PADRAO = ['#2563eb', '#ef4444', '#10b981', '#f59e0b', '#a855f7', '#ec4899', '#6366f1', '#14b8a6'];
+// Paleta Okabe-Ito: segura para todos os tipos de daltonismo
+const COLORS_DALTONISMO = ['#0072B2', '#E69F00', '#009E73', '#D55E00', '#56B4E9', '#CC79A7', '#F0E442', '#000000'];
+// Cores das linhas do gráfico de evolução (verde/vermelho → pares seguros no daltonismo)
+const RECEITA_PADRAO = '#22c55e';
+const DESPESA_PADRAO = '#ef4444';
+const RECEITA_DALTONISMO = '#009E73';
+const DESPESA_DALTONISMO = '#D55E00';
 
 export function Relatorios() {
+  const { config } = useA11y();
+  // No modo daltonismo os gráficos trocam para a paleta segura Okabe-Ito
+  const daltonismoAtivo = config.ativa && config.tipos.includes('daltonismo');
+  const COLORS = daltonismoAtivo ? COLORS_DALTONISMO : COLORS_PADRAO;
+  const COR_RECEITA = daltonismoAtivo ? RECEITA_DALTONISMO : RECEITA_PADRAO;
+  const COR_DESPESA = daltonismoAtivo ? DESPESA_DALTONISMO : DESPESA_PADRAO;
   const [grupos, setGrupos] = useState<any[]>([]);
   const [grupo_id, setGrupoId] = useState('');
   const [mes, setMes] = useState(new Date().toISOString().slice(0, 7));
@@ -93,25 +110,18 @@ export function Relatorios() {
     <div>
       <div className="page-header">
         <h1>Relatórios e Gráficos</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <select
-            value={grupo_id}
-            onChange={(e) => setGrupoId(e.target.value)}
-            className="form-group-input"
-            style={{ width: '200px' }}
-          >
-            <option value="">Selecione um grupo</option>
-            {grupos.map((g) => (
-              <option key={g.id} value={g.id}>{g.nome}</option>
-            ))}
-          </select>
-          <input
-            type="month"
-            value={mes}
-            onChange={(e) => setMes(e.target.value)}
-            className="form-group-input"
-            style={{ marginLeft: '0.5rem' }}
-          />
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <Campo icon={Users} label="Grupo">
+            <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)}>
+              <option value="">Selecione um grupo</option>
+              {grupos.map((g) => (
+                <option key={g.id} value={g.id}>{g.nome}</option>
+              ))}
+            </select>
+          </Campo>
+          <Campo icon={CalendarDays} label="Mês">
+            <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
+          </Campo>
           <button onClick={exportarCSV} className="btn btn-secondary btn-sm">
             📥 Exportar CSV
           </button>
@@ -129,24 +139,29 @@ export function Relatorios() {
           ) : (
             <>
               <div style={{ height: 300 }}>
-                <PieChart>
-                  <Pie
-                    data={graficoCategoria}
-                    dataKey="total"
-                    nameKey="categoria"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    fill="#8884d8"
-                    label
-                  >
-                    {graficoCategoria.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
+                {/* ResponsiveContainer: a PieChart precisa de um container com
+                    dimensões para renderizar (sem ele o SVG fica vazio) */}
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={graficoCategoria}
+                      dataKey="total"
+                      nameKey="categoria"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      fill="#8884d8"
+                      label
+                      isAnimationActive={false}
+                    >
+                      {graficoCategoria.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
               <table className="table" style={{ marginTop: '1rem', fontSize: '0.875rem' }}>
                 <thead>
@@ -192,20 +207,22 @@ export function Relatorios() {
                   <LineChart data={graficoEvolucao}>
                     <defs>
                       <linearGradient id="colorReceitas" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                        <stop offset="5%" stopColor={COR_RECEITA} stopOpacity={0.8} />
+                        <stop offset="95%" stopColor={COR_RECEITA} stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="colorDespesas" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                        <stop offset="5%" stopColor={COR_DESPESA} stopOpacity={0.8} />
+                        <stop offset="95%" stopColor={COR_DESPESA} stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="mes" />
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="receitas" stroke="#22c55e" strokeWidth={2} name="Receitas" />
-                    <Line type="monotone" dataKey="despesas" stroke="#ef4444" strokeWidth={2} name="Despesas" />
+                    {/* isAnimationActive={false}: a animação do Recharts 2.10
+                        pode deixar as curvas sem renderizar em alguns ambientes */}
+                    <Line type="monotone" dataKey="receitas" stroke={COR_RECEITA} strokeWidth={2} name="Receitas" isAnimationActive={false} />
+                    <Line type="monotone" dataKey="despesas" stroke={COR_DESPESA} strokeWidth={2} name="Despesas" isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

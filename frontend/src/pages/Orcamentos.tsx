@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
-import { Plus } from 'lucide-react';
+import { CalendarDays, Plus, Users } from 'lucide-react';
 import { InsightPanel } from '../ai/InsightPanel';
+import { Campo } from '../components/Campo';
 
 export function Orcamentos() {
   const [grupos, setGrupos] = useState<any[]>([]);
@@ -79,19 +80,17 @@ export function Orcamentos() {
       </div>
 
       <div className="toolbar">
-        <div className="form-group">
-          <label>Grupo</label>
-          <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)} className="form-group-input">
+        <Campo icon={Users} label="Grupo">
+          <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)}>
             <option value="">Selecione</option>
             {grupos.map((g) => (
               <option key={g.id} value={g.id}>{g.nome}</option>
             ))}
           </select>
-        </div>
-        <div className="form-group">
-          <label>Mês</label>
-          <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className="form-group-input" />
-        </div>
+        </Campo>
+        <Campo icon={CalendarDays} label="Mês">
+          <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
+        </Campo>
       </div>
 
       {somenteAlerta && (
