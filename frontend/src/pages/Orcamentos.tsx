@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
-import { CalendarDays, Plus, Users } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { InsightPanel } from '../ai/InsightPanel';
-import { Campo } from '../components/Campo';
+import { CampoGrupo } from '../components/CampoGrupo';
+import { CampoMes } from '../components/CampoMes';
 
 export function Orcamentos() {
   const [grupos, setGrupos] = useState<any[]>([]);
@@ -53,18 +54,8 @@ export function Orcamentos() {
           <h2>Orçamento Mensal</h2>
         </div>
         <p>Selecione um grupo para visualizar e gerenciar orçamentos.</p>
-        <div className="form-group" style={{ marginTop: '1rem', marginBottom: 0 }}>
-          <label>Grupo</label>
-          <select
-            value={grupo_id}
-            onChange={(e) => setGrupoId(e.target.value)}
-            className="form-group-input"
-          >
-            <option value="">Selecione</option>
-            {grupos.map((g) => (
-              <option key={g.id} value={g.id}>{g.nome}</option>
-            ))}
-          </select>
+        <div style={{ marginTop: '1rem', maxWidth: 320 }}>
+          <CampoGrupo value={grupo_id} onChange={setGrupoId} grupos={grupos} />
         </div>
       </div>
     );
@@ -80,17 +71,14 @@ export function Orcamentos() {
       </div>
 
       <div className="toolbar">
-        <Campo icon={Users} label="Grupo">
-          <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)}>
-            <option value="">Selecione</option>
-            {grupos.map((g) => (
-              <option key={g.id} value={g.id}>{g.nome}</option>
-            ))}
-          </select>
-        </Campo>
-        <Campo icon={CalendarDays} label="Mês">
-          <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
-        </Campo>
+        <CampoGrupo
+          value={grupo_id}
+          onChange={setGrupoId}
+          grupos={grupos}
+          placeholder="Selecione"
+          limparLabel="Selecione um grupo"
+        />
+        <CampoMes value={mes} onChange={setMes} />
       </div>
 
       {somenteAlerta && (
@@ -180,16 +168,10 @@ export function Orcamentos() {
                   ))}
               </select>
             </div>
-            <div className="form-group">
-              <label>Mês</label>
-              <input
-                type="month"
-                value={form.mes}
-                onChange={(e) => setForm({ ...form, mes: e.target.value })}
-                required
-                className="form-group-input"
-              />
-            </div>
+            <CampoMes
+              value={form.mes}
+              onChange={(mes) => setForm({ ...form, mes })}
+            />
             <div className="form-group">
               <label>Valor Limite (R$)</label>
               <input

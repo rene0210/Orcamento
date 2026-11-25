@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
-import { CalendarDays, ListFilter, Plus, Users } from 'lucide-react';
+import { ListFilter, Plus } from 'lucide-react';
 import { InsightPanel } from '../ai/InsightPanel';
 import { Campo } from '../components/Campo';
+import { CampoGrupo } from '../components/CampoGrupo';
+import { CampoMes } from '../components/CampoMes';
 
 export function Transacoes() {
   const [transacoes, setTransacoes] = useState<any[]>([]);
@@ -48,6 +50,7 @@ export function Transacoes() {
 
   async function criarTransacao(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.grupo_id) return;
     await api.criarTransacao(form);
     setNova(false);
     setForm({
@@ -86,19 +89,14 @@ export function Transacoes() {
 
       <div className="card">
         <div className="toolbar">
-          <Campo icon={Users} label="Grupo">
-            <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)}>
-              <option value="">Todos os grupos</option>
-              {grupos.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.nome}
-                </option>
-              ))}
-            </select>
-          </Campo>
-          <Campo icon={CalendarDays} label="Mês">
-            <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
-          </Campo>
+          <CampoGrupo
+            value={grupo_id}
+            onChange={setGrupoId}
+            grupos={grupos}
+            placeholder="Todos os grupos"
+            limparLabel="Todos os grupos"
+          />
+          <CampoMes value={mes} onChange={setMes} limparLabel="Todos os meses" />
           <Campo icon={ListFilter} label="Tipo">
             <select
               value={tipo}
@@ -172,16 +170,12 @@ export function Transacoes() {
             <h2>Nova Transação</h2>
           </div>
           <form onSubmit={criarTransacao} className="form-grid">
-            <div className="form-group">
-              <label>Grupo ID</label>
-              <input
-                type="number"
-                value={form.grupo_id}
-                onChange={(e) => setForm({ ...form, grupo_id: e.target.value })}
-                required
-                className="form-group-input"
-              />
-            </div>
+            <CampoGrupo
+              value={form.grupo_id}
+              onChange={(grupo_id) => setForm({ ...form, grupo_id })}
+              grupos={grupos}
+              placeholder="Selecione o grupo"
+            />
             <div className="form-group">
               <label>Categoria ID</label>
               <select

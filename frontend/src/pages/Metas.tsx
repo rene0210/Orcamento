@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
-import { Users } from 'lucide-react';
 import { InsightPanel } from '../ai/InsightPanel';
-import { Campo } from '../components/Campo';
+import { CampoGrupo } from '../components/CampoGrupo';
 
 // Metas não têm filtro de mês: a IA analisa o mês corrente
 const MES_ATUAL = new Date().toISOString().slice(0, 7);
@@ -54,14 +53,8 @@ export function Metas() {
           <h2>Metas Compartilhadas</h2>
         </div>
         <p>Selecione um grupo para visualizar e gerenciar metas.</p>
-        <div className="form-group" style={{ marginTop: '1rem', marginBottom: 0 }}>
-          <label>Grupo</label>
-          <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)} className="form-group-input">
-            <option value="">Selecione</option>
-            {grupos.map((g) => (
-              <option key={g.id} value={g.id}>{g.nome}</option>
-            ))}
-          </select>
+        <div style={{ marginTop: '1rem', maxWidth: 320 }}>
+          <CampoGrupo value={grupo_id} onChange={setGrupoId} grupos={grupos} />
         </div>
       </div>
     );
@@ -77,14 +70,13 @@ export function Metas() {
       </div>
 
       <div className="toolbar">
-        <Campo icon={Users} label="Grupo">
-          <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)}>
-            <option value="">Selecione um grupo</option>
-            {grupos.map((g) => (
-              <option key={g.id} value={g.id}>{g.nome}</option>
-            ))}
-          </select>
-        </Campo>
+        <CampoGrupo
+          value={grupo_id}
+          onChange={setGrupoId}
+          grupos={grupos}
+          placeholder="Selecione um grupo"
+          limparLabel="Selecione um grupo"
+        />
       </div>
 
       <div className="card">

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import { AlertTriangle, ArrowRight, CalendarDays, Plus, TrendingDown, TrendingUp, UserPlus, Users, Wallet } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Plus, TrendingDown, TrendingUp, UserPlus, Wallet } from 'lucide-react';
 import { InsightPanel } from '../ai/InsightPanel';
-import { Campo } from '../components/Campo';
+import { CampoGrupo } from '../components/CampoGrupo';
+import { CampoMes } from '../components/CampoMes';
 
 // Formata número em BRL (ex: 1234.5 -> "R$ 1.234,50")
 function brl(v: number): string {
@@ -173,26 +174,13 @@ export function Dashboard() {
       {erro && <div className="alert alert-error" role="alert">{erro}</div>}
 
       <div className="toolbar">
-        <Campo icon={Users} label="Grupo">
-          <select
-            value={grupoSelecionado || ''}
-            onChange={(e) => setGrupoSelecionado(e.target.value || null)}
-          >
-            <option value="">Selecione um grupo</option>
-            {grupos.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.nome}
-              </option>
-            ))}
-          </select>
-        </Campo>
-        <Campo icon={CalendarDays} label="Mês">
-          <input
-            type="month"
-            value={mes}
-            onChange={(e) => setMes(e.target.value)}
-          />
-        </Campo>
+        <CampoGrupo
+          value={grupoSelecionado || ''}
+          onChange={(v) => setGrupoSelecionado(v || null)}
+          grupos={grupos}
+          placeholder="Selecione um grupo"
+        />
+        <CampoMes value={mes} onChange={setMes} />
       </div>
 
       {/* Totais reais do mês — cada cartão leva à tela do respectivo tópico */}

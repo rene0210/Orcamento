@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { InsightPanel } from '../ai/InsightPanel';
+import { CampoGrupo } from '../components/CampoGrupo';
 
 // Importar não tem filtro de mês: a IA analisa o mês corrente
 const MES_ATUAL = new Date().toISOString().slice(0, 7);
@@ -37,7 +38,7 @@ export function Importar() {
 
   async function handleImportar() {
     if (!arquivo || !grupo_id) {
-      setErro('Selecione um arquivo e informe o ID do grupo.');
+      setErro('Selecione um arquivo e um grupo.');
       return;
     }
     setErro('');
@@ -81,16 +82,12 @@ export function Importar() {
           )}
         </div>
 
-        <div className="form-group">
-          <label>ID do Grupo</label>
-          <input
-            type="number"
-            value={grupo_id}
-            onChange={(e) => setGrupoId(e.target.value)}
-            required
-            className="form-group-input"
-          />
-        </div>
+        <CampoGrupo
+          value={grupo_id}
+          onChange={setGrupoId}
+          grupos={grupos}
+          placeholder="Selecione o grupo"
+        />
 
         <button
           onClick={handleImportar}

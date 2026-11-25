@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { api, baseURL } from '../api';
 import { InsightPanel } from '../ai/InsightPanel';
 import { useA11y } from '../a11y/A11yContext';
-import { Campo } from '../components/Campo';
-import { CalendarDays, Users } from 'lucide-react';
+import { CampoGrupo } from '../components/CampoGrupo';
+import { CampoMes } from '../components/CampoMes';
 import {
   PieChart,
   Pie,
@@ -93,14 +93,13 @@ export function Relatorios() {
           <h2>Relatórios e Gráficos</h2>
         </div>
         <p>Selecione um grupo para visualizar relatórios.</p>
-        <div className="form-group" style={{ marginTop: '1rem', marginBottom: 0 }}>
-          <label>Grupo</label>
-          <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)} className="form-group-input">
-            <option value="">Selecione</option>
-            {grupos.map((g) => (
-              <option key={g.id} value={g.id}>{g.nome}</option>
-            ))}
-          </select>
+        <div style={{ marginTop: '1rem', maxWidth: 320 }}>
+          <CampoGrupo
+            value={grupo_id}
+            onChange={setGrupoId}
+            grupos={grupos}
+            placeholder="Selecione um grupo"
+          />
         </div>
       </div>
     );
@@ -111,17 +110,14 @@ export function Relatorios() {
       <div className="page-header">
         <h1>Relatórios e Gráficos</h1>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <Campo icon={Users} label="Grupo">
-            <select value={grupo_id} onChange={(e) => setGrupoId(e.target.value)}>
-              <option value="">Selecione um grupo</option>
-              {grupos.map((g) => (
-                <option key={g.id} value={g.id}>{g.nome}</option>
-              ))}
-            </select>
-          </Campo>
-          <Campo icon={CalendarDays} label="Mês">
-            <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} />
-          </Campo>
+          <CampoGrupo
+            value={grupo_id}
+            onChange={setGrupoId}
+            grupos={grupos}
+            placeholder="Selecione um grupo"
+            limparLabel="Selecione um grupo"
+          />
+          <CampoMes value={mes} onChange={setMes} />
           <button onClick={exportarCSV} className="btn btn-secondary btn-sm">
             📥 Exportar CSV
           </button>
