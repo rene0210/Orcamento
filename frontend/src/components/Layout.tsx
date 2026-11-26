@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAi } from '../ai/AiContext';
 import { useA11y } from '../a11y/A11yContext';
+import { VoiceEngine } from '../a11y/VoiceEngine';
 import {
   Accessibility,
   BarChart3,
@@ -46,7 +47,7 @@ export function AppLayout() {
   const location = useLocation();
   const email = emailDoToken();
   const { ativa: iaAtiva, alternar: alternarIa } = useAi();
-  const { config: a11y, abrirPainel } = useA11y();
+  const { config: a11y, abrirPainel, vozAtiva, vozStatus } = useA11y();
 
   // Fecha o menu mobile ao trocar de página
   useEffect(() => {
@@ -102,17 +103,26 @@ export function AppLayout() {
 
         {/* Entrada do modo acessibilidade (abre o painel de escolha) */}
         <button
-          className={`a11y-entry${a11y.ativa ? ' on' : ''}`}
+          className={`a11y-entry${a11y.ativa ? ' on' : ''}${
+            vozAtiva && vozStatus === 'ouvindo' ? ' ouvindo' : ''
+          }`}
           onClick={abrirPainel}
           aria-haspopup="dialog"
-          title="Configurar acessibilidade (contraste, daltonismo, audição...)"
+          title="Configurar acessibilidade (contraste, daltonismo, audição, voz...)"
         >
           <Accessibility size={16} />
           <span>Acessibilidade</span>
           {a11y.ativa && a11y.tipos.length > 0 && (
             <span className="a11y-count">{a11y.tipos.length}</span>
           )}
+          {/* Bolinha de escuta ativa do assistente de voz */}
+          {vozAtiva && vozStatus === 'ouvindo' && (
+            <span className="a11y-ponto" aria-label="Assistente de voz ouvindo" />
+          )}
         </button>
+
+        {/* Motor do assistente de voz (roda em segundo plano, sem UI) */}
+        <VoiceEngine />
 
         <div className="sidebar-footer">
           {email && (

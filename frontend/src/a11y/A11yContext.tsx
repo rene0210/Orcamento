@@ -51,6 +51,14 @@ interface A11yConfig {
   tipos: TipoA11y[];
 }
 
+/** Estados do assistente de voz (Web Speech API). */
+export type VozStatus =
+  | 'desligado'
+  | 'iniciando'
+  | 'ouvindo'
+  | 'erro'
+  | 'nao-suportado';
+
 interface A11yContextValue {
   config: A11yConfig;
   painelAberto: boolean;
@@ -58,9 +66,17 @@ interface A11yContextValue {
   fecharPainel: () => void;
   alternarAtiva: () => void;
   alternarTipo: (tipo: TipoA11y) => void;
+  /** Assistente de voz: ligado/desligado (persistido em localStorage). */
+  vozAtiva: boolean;
+  alternarVoz: () => void;
+  /** Estado da escuta + mensagem exibida no painel (role="status"). */
+  vozStatus: VozStatus;
+  vozMensagem: string;
+  setVozStatus: (status: VozStatus, mensagem?: string) => void;
 }
 
 const CHAVE = 'a11y_config';
+const CHAVE_VOZ = 'a11y_voz';
 
 function carregar(): A11yConfig {
   try {
@@ -82,16 +98,36 @@ const A11yContext = createContext<A11yContextValue>({
   fecharPainel: () => {},
   alternarAtiva: () => {},
   alternarTipo: () => {},
+  vozAtiva: false,
+  alternarVoz: () => {},
+  vozStatus: 'desligado',
+  vozMensagem: '',
+  setVozStatus: () => {},
 });
 
 export function A11yProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<A11yConfig>(carregar);
   const [painelAberto, setPainelAberto] = useState(false);
+  // Assistente de voz: preferência persistida (o estado da escuta é volátil)
+  const [vozAtiva, setVozAtiva] = useState(() => localStorage.getItem(CHAVE_VOZ) === '1');
+  const [vozStatus, setVozStatusState] = useState<VozStatus>('desligado');
+  const [vozMensagem, setVozMensagem] = useState('');
 
   // Persiste a escolha do usuário
   useEffect(() => {
     localStorage.setItem(CHAVE, JSON.stringify(config));
   }, [config]);
+
+  // Persiste o assistente de voz ligado/desligado
+  useEffect(() => {
+    localStorage.setItem(CHAVE_VOZ, vozAtiva ? '1' : '0');
+  }, [vozAtiva]);
+
+  // Atualiza estado + mensagem da escuta (usado pelo motor de voz)
+  const setVozStatus = (status: VozStatus, mensagem = '') => {
+    setVozStatusState(status);
+    setVozMensagem(mensagem);
+  };
 
   // Aplica as adaptações como classes no <html> (o CSS faz o resto)
   useEffect(() => {
@@ -118,6 +154,11 @@ export function A11yProvider({ children }: { children: ReactNode }) {
               ? c.tipos.filter((t) => t !== tipo)
               : [...c.tipos, tipo],
           })),
+        vozAtiva,
+        alternarVoz: () => setVozAtiva((v) => !v),
+        vozStatus,
+        vozMensagem,
+        setVozStatus,
       }}
     >
       {children}

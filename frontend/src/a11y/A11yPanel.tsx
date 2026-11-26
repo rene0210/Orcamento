@@ -11,6 +11,7 @@ import {
   Check,
   EarOff,
   Eye,
+  Mic,
   Palette,
   Type,
   X,
@@ -26,7 +27,17 @@ const ICONES: Record<TipoA11y, typeof Eye> = {
 };
 
 export function A11yPanel() {
-  const { config, painelAberto, fecharPainel, alternarAtiva, alternarTipo } = useA11y();
+  const {
+    config,
+    painelAberto,
+    fecharPainel,
+    alternarAtiva,
+    alternarTipo,
+    vozAtiva,
+    alternarVoz,
+    vozStatus,
+    vozMensagem,
+  } = useA11y();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Ao abrir: foca o diálogo (teclado já cai dentro dele)
@@ -134,6 +145,46 @@ export function A11yPanel() {
               Selecione ao menos um tipo de necessidade para o sistema se adaptar.
             </p>
           )}
+
+          {/* Assistente de voz: navegação e leitura por fala (Web Speech API local) */}
+          <div className="a11y-voz" role="group" aria-label="Assistente de voz">
+            <button
+              className={`a11y-master a11y-voz-btn${vozAtiva ? ' on' : ''}`}
+              onClick={alternarVoz}
+              aria-pressed={vozAtiva}
+            >
+              <span className="a11y-tipo-icone a11y-voz-icone" aria-hidden="true">
+                <Mic size={18} />
+              </span>
+              <span className="a11y-master-info">
+                <strong>Assistente de voz</strong>
+                <span>
+                  Fale para navegar: “abrir dashboard”, “transações”, “metas”… ou diga
+                  “ajuda” para ouvir os comandos e “ler sugestões” para a IA falar os
+                  alertas da tela.
+                </span>
+              </span>
+              <span className="ai-switch">
+                <span className="ai-knob" />
+              </span>
+            </button>
+
+            {/* Status da escuta anunciado para leitores de tela */}
+            <p
+              className={`a11y-voz-status${
+                vozStatus === 'ouvindo'
+                  ? ' ouvindo'
+                  : vozStatus === 'erro' || vozStatus === 'nao-suportado'
+                    ? ' erro'
+                    : ''
+              }`}
+              role="status"
+            >
+              {vozAtiva
+                ? vozMensagem || 'Pronto para ouvir.'
+                : 'Desligado. Ative o botão acima para usar a voz.'}
+            </p>
+          </div>
         </div>
 
         <div className="a11y-dialog-foot">

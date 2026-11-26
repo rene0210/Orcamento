@@ -2072,6 +2072,73 @@ select.form-group-input {
   padding: 0.55rem 0.8rem;
 }
 
+/* ---- Assistente de voz ---- */
+.a11y-voz {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.a11y-voz-btn {
+  align-items: flex-start;
+}
+
+/* Ícone do microfone reutiliza o bloco dos tipos, com cor própria */
+.a11y-voz-icone {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.a11y-voz-btn.on .a11y-voz-icone {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.a11y-voz-btn .ai-switch {
+  margin-top: 0.2rem;
+}
+
+/* Linha de status (role="status") da escuta */
+.a11y-voz-status {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.a11y-voz-status.ouvindo {
+  color: #047857;
+  font-weight: 600;
+}
+
+.a11y-voz-status.erro {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+/* Ponto pulsante de "ouvindo" na entrada da sidebar */
+.a11y-ponto {
+  margin-left: auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 0 0 rgb(52 211 153 / 0.7);
+  animation: a11y-pulso 1.4s ease-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes a11y-pulso {
+  0% {
+    box-shadow: 0 0 0 0 rgb(52 211 153 / 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgb(52 211 153 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(52 211 153 / 0);
+  }
+}
+
 .a11y-dialog-foot {
   padding: 1rem 1.4rem;
   border-top: 1px solid var(--border);
@@ -2101,10 +2168,14 @@ html.a11y-visao {
   --border: #000000;
   --border-strong: #000000;
   --primary: #0000b3;
+  /* RAIZ: quase todo texto do app está em rem (relativo ao <html>).
+     Escalar só o <body> não muda nada — é preciso ampliar a raiz
+     (16px → 21px ≈ +30%) para os rem crescerem de verdade. */
+  font-size: 21px;
 }
 
 html.a11y-visao body {
-  font-size: 18px;
+  font-size: 19.5px; /* mesmo +30% para o texto herdado (que é em px) */
 }
 
 html.a11y-visao .card,
@@ -2120,9 +2191,28 @@ html.a11y-visao .page-header {
   border-bottom-width: 2px;
 }
 
-/* --- Só texto grande --- */
+/* --- Só texto grande ---
+   Correção: a regra anterior só mexia no <body>, mas quase todo texto
+   do app usa `rem` (unidade relativa ao <html>). Escalando a raiz
+   (16px → 19.2px ≈ +20%) TODOS os títulos, cartões, botões e tabelas
+   crescem de verdade; o <body> cobre o texto herdado em px. */
+html.a11y-texto {
+  font-size: 19.2px;
+}
+
 html.a11y-texto body {
   font-size: 18px;
+}
+
+/* Ampliar a raiz aumenta também o padding das células (em rem) e as
+   colunas têm white-space: nowrap — a tabela passaria a vazar para
+   fora da página. Nas telas pequenas já rolamos; nos modos de texto
+   grande fazemos o mesmo para a página nunca ter scroll horizontal. */
+html.a11y-texto .table,
+html.a11y-visao .table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* --- Daltonismo: paleta segura Okabe-Ito + ícones nos status --- */
